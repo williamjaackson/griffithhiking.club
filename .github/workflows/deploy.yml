@@ -13,10 +13,14 @@ concurrency:
 env:
   SITE_ROOT: /srv/www/griffithhiking.club
   KEEP_RELEASES: 5
+  # Fail a stalled connection quickly so a retry can happen, and keep long
+  # transfers alive.
+  SSH_OPTS: "-o ConnectTimeout=30 -o ServerAliveInterval=10 -o ServerAliveCountMax=6"
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: production
       url: https://griffithhiking.club
@@ -61,13 +65,22 @@ jobs:
           # Host key comes from the repo instead of ssh-keyscan at runtime.
           cat infra/known_hosts >>~/.ssh/known_hosts
 
-      - name: Check the VPS is reachable
+      # This host intermittently does not answer TCP 22 promptly from GitHub
+      # runners - the same flake that made ssh-keyscan fail at its 5s default,
+      # and that griffith-ict-web already works around with retries. So wait for
+      # the host rather than gate on a single attempt.
+      - name: Wait for the VPS to accept SSH
         run: |
-          if ! timeout 10 bash -c ": </dev/tcp/$VPS_TARGET/22"; then
-            echo "::error::cannot open TCP 22 on the deploy target from this runner"
-            exit 1
-          fi
-          echo "TCP 22 reachable"
+          for attempt in 1 2 3 4 5; do
+            if timeout 20 bash -c ": </dev/tcp/$VPS_TARGET/22"; then
+              echo "TCP 22 answered on attempt $attempt"
+              exit 0
+            fi
+            echo "attempt $attempt: no answer on TCP 22, retrying in 15s"
+            sleep 15
+          done
+          echo "::error::TCP 22 on the deploy target never answered after 5 attempts"
+          exit 1
 
       - name: Upload release
         run: |
@@ -76,17 +89,37 @@ jobs:
           echo "Uploading to $SITE_ROOT/releases/$RELEASE"
           # Explicit modes so the result never depends on the runner's umask;
           # nginx workers read these as 'other'.
-          rsync -a --delete --chmod=D755,F644 \
-            -e "ssh -i ~/.ssh/deploy_key" \
-            dist/ "deploy@$VPS_TARGET:$SITE_ROOT/releases/$RELEASE/"
+          # Re-running rsync into the same directory resumes rather than
+          # duplicating, so retrying is safe.
+          for attempt in 1 2 3; do
+            if rsync -a --delete --chmod=D755,F644 \
+              -e "ssh -i ~/.ssh/deploy_key $SSH_OPTS" \
+              dist/ "deploy@$VPS_TARGET:$SITE_ROOT/releases/$RELEASE/"; then
+              echo "uploaded on attempt $attempt"
+              exit 0
+            fi
+            echo "rsync attempt $attempt failed, retrying in 15s"
+            sleep 15
+          done
+          echo "::error::rsync failed after 3 attempts"
+          exit 1
 
       # Piped over stdin rather than inlined, so the script stays a real file in
       # the repo that can be read and linted on its own.
       - name: Activate release
         run: |
-          ssh -i ~/.ssh/deploy_key "deploy@$VPS_TARGET" \
-            "SITE_ROOT='$SITE_ROOT' RELEASE='$RELEASE' KEEP='$KEEP_RELEASES' bash -s" \
-            <infra/activate-release.sh
+          # Swapping the symlink is idempotent, so this is safe to repeat.
+          for attempt in 1 2 3; do
+            if ssh -i ~/.ssh/deploy_key $SSH_OPTS "deploy@$VPS_TARGET" \
+              "SITE_ROOT='$SITE_ROOT' RELEASE='$RELEASE' KEEP='$KEEP_RELEASES' bash -s" \
+              <infra/activate-release.sh; then
+              exit 0
+            fi
+            echo "activate attempt $attempt failed, retrying in 15s"
+            sleep 15
+          done
+          echo "::error::could not activate the release after 3 attempts"
+          exit 1
 
       - name: Verify the site responds
         run: |
