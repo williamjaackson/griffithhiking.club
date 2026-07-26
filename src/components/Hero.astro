@@ -2,11 +2,7 @@
 import { Image, Picture } from "astro:assets";
 import heroPhoto from "../assets/hero-pats-bluff.jpg";
 import clubLogo from "../assets/club-logo.png";
-
-// Step one of joining. Rendered as a real link so it works without JavaScript;
-// the membership dialog will intercept the click when it is built.
-const campusGroupsUrl =
-  "https://griffith.campusgroups.com/Hikingclub/club_signup";
+import { links } from "../lib/links";
 ---
 
 {
@@ -48,9 +44,10 @@ const campusGroupsUrl =
     </a>
     <a
       class="hero__cta absolute right-gutter bottom-gutter-block inline-flex items-center gap-control-gap px-control-inline py-control-block rounded-pill bg-cream text-olive-dark eyebrow whitespace-nowrap"
-      href={campusGroupsUrl}
+      href={links.campusGroups}
       target="_blank"
       rel="noreferrer"
+      data-join
     >
       Join the club
       <svg
