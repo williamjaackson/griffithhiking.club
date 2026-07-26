@@ -30,7 +30,7 @@ const frames = [
       frames.map((f) => (
         <figure>
           <Picture
-            class="rail__photo"
+            class="rail__photo rounded-organic"
             src={f.src}
             alt={f.alt}
             formats={["avif", "webp"]}
@@ -87,6 +87,8 @@ const frames = [
     scroll-snap-align: center;
   }
 
+  /* The arch-topped silhouette from the token layer, which is what this shape
+     exists for - photo cards. */
   .rail__photo {
     width: 100%;
     height: auto;
