@@ -11,7 +11,7 @@ export const joinLinks = [
   {
     id: "campus-groups",
     name: "Campus Groups",
-    detail: "Membership registration",
+    detail: "Official Griffith Membership Registration",
     href: links.campusGroups,
   },
   {
