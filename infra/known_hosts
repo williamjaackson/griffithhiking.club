@@ -1,0 +1,6 @@
+# Pinned SSH host key for the deploy target, used by .github/workflows/deploy.yml.
+# Committed rather than fetched with ssh-keyscan at deploy time: one less network
+# dependency, and it pins a known key instead of trusting whatever answers.
+#
+# Regenerate with:  ssh-keyscan -t ed25519 -T 10 72.61.210.78
+72.61.210.78 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDeN2Fj+8b0TYIZcFrfGiIOfSjyUuejRdSMpvqM2IsOk
