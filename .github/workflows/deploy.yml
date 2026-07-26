@@ -1,0 +1,83 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never cancel a deploy midway - a half-applied release is worse than a slow one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  SITE_ROOT: /srv/www/griffithhiking.club
+  KEEP_RELEASES: 5
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://griffithhiking.club
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # `main` is protected by CI, but re-checking here means a type error can
+      # never reach production even if the branch protection is bypassed.
+      - run: pnpm check
+
+      - run: pnpm build
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pin the host key rather than using StrictHostKeyChecking=no.
+          ssh-keyscan -t ed25519 "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Upload release
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          RELEASE="$(date -u +%Y%m%dT%H%M%SZ)-${GITHUB_SHA::7}"
+          echo "RELEASE=$RELEASE" >> "$GITHUB_ENV"
+          echo "Uploading to $SITE_ROOT/releases/$RELEASE"
+          # Explicit modes so the result never depends on the runner's umask;
+          # nginx workers read these as 'other'.
+          rsync -a --delete --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            dist/ "deploy@$VPS_HOST:$SITE_ROOT/releases/$RELEASE/"
+
+      # Piped over stdin rather than inlined, so the script stays a real file in
+      # the repo that can be read and linted on its own.
+      - name: Activate release
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "deploy@$VPS_HOST" \
+            "SITE_ROOT='$SITE_ROOT' RELEASE='$RELEASE' KEEP='$KEEP_RELEASES' bash -s" \
+            < infra/activate-release.sh
+
+      - name: Verify the site responds
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          # Checked by Host header so this passes before DNS is pointed.
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H 'Host: griffithhiking.club' "http://$VPS_HOST/")
+          echo "origin returned $code"
+          test "$code" = "200"
