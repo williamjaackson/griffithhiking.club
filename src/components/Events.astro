@@ -1,5 +1,6 @@
 ---
-import { getCollection } from "astro:content";
+import { Picture } from "astro:assets";
+import { getCollection, getEntry } from "astro:content";
 import { links } from "../lib/links";
 import {
   clubToday,
@@ -21,125 +22,171 @@ const { next, queue } = splitUpcoming(
   clubToday(new Date()),
 );
 const nextBadge = next ? formatBadge(next) : null;
+
+const home = await getEntry("home", "index");
+const { eventsPhoto, eventsPhotoAlt } = home!.data;
 ---
 
 <section class="px-gutter py-section" data-tone="paper" id="upcoming">
-  <header class="mx-auto max-w-5xl">
-    <p class="eyebrow">Upcoming hikes</p>
-    <h2 class="text-title font-display mt-4 uppercase">
-      Meet us at<br />the trailhead.
-    </h2>
-  </header>
+  <div class="mx-auto max-w-5xl">
+    <h2 class="text-section font-display uppercase">Upcoming hikes</h2>
 
-  {
-    next ? (
-      <div class="events__layout mx-auto mt-12 grid max-w-5xl items-start gap-8">
-        {/* The next departure is the one thing a visitor is actually looking
-            for, so it gets its own card, a contrasting tone and the only
-            button in the section. */}
-        <article
-          class="events__next rounded-card px-control-inline py-control-inline flex flex-col"
-          data-tone="olive"
-        >
-          <p class="eyebrow opacity-80">Next departure</p>
-          {/* The abbreviated date is styling, so it is hidden from assistive
-            technology and the full date given instead - otherwise a screen
-            reader announces the same date twice, once unintelligibly. */}
-          <time
-            class="events__badge mt-5 flex items-baseline gap-3"
-            datetime={next.start}
+    {
+      next ? (
+        <div class="events__layout mt-12 grid items-start gap-10">
+          {/* The next departure is the one thing a visitor is actually looking
+              for, so it is the photograph: a single tall frame carrying the
+              date, the destination and the only button in the section.
+              The ink tone gives cream text, and leaves something legible
+              behind the photo if it ever fails to load. */}
+          <article
+            class="events__next rounded-organic relative isolate flex flex-col justify-end overflow-hidden p-8 sm:p-10"
+            data-tone="ink"
           >
-            <span class="events__day font-display" aria-hidden="true">
-              {nextBadge!.day}
-            </span>
-            <span class="caption" aria-hidden="true">
-              {nextBadge!.month}
-            </span>
-            <span class="sr-only">{formatDateRange(next)}</span>
-          </time>
-          <h3 class="text-lead font-serif mt-5">{next.title}</h3>
-          <p class="mt-2 text-body opacity-85">
-            {next.place} · {next.detail}
-          </p>
+            {/* AVIF first, WebP next, JPEG as the floor - the same ladder as
+                the hero and the rail. The card is capped by the container
+                rather than growing with the viewport, so `sizes` is a fixed
+                width above the breakpoint: a vw figure would over-request on a
+                wide screen and fetch an image no larger than 900w can fill. */}
+            <Picture
+              class="absolute inset-0 -z-20 h-full w-full object-cover"
+              src={eventsPhoto}
+              alt={eventsPhotoAlt}
+              formats={["avif", "webp"]}
+              fallbackFormat="jpeg"
+              widths={[420, 640, 900]}
+              sizes="(width >= 60rem) 24rem, 92vw"
+              quality={72}
+              loading="lazy"
+            />
+            <div class="events__scrim absolute inset-0 -z-10" />
+
+            <p class="eyebrow events__label absolute">Next departure</p>
+
+            {/* The abbreviated date is styling, so it is hidden from assistive
+                technology and the full date given instead - otherwise a screen
+                reader announces the same date twice, once unintelligibly. */}
+            <time class="flex items-baseline gap-3" datetime={next.start}>
+              <span class="events__day font-display" aria-hidden="true">
+                {nextBadge!.day}
+              </span>
+              <span class="caption" aria-hidden="true">
+                {nextBadge!.month}
+              </span>
+              <span class="sr-only">{formatDateRange(next)}</span>
+            </time>
+
+            <h3 class="events__title font-serif mt-6">{next.title}</h3>
+            <p class="caption mt-3 opacity-90">
+              {next.place} · {next.detail}
+            </p>
+            <a
+              class="events__cta rounded-pill px-control-inline py-control-block gap-control-gap eyebrow bg-cream text-olive-dark mt-8 inline-flex w-fit items-center"
+              href={links.campusGroups}
+              target="_blank"
+              rel="noreferrer"
+              data-join
+            >
+              Join this hike
+            </a>
+          </article>
+
+          {/* An ordered list because the order is the meaning: these are the
+              hikes queued behind the next one. */}
+          <ol class="events__queue">
+            {queue.map((event) => {
+              const badge = formatBadge(event);
+              return (
+                <li class="events__row grid items-center gap-5">
+                  <time class="caption events__date" datetime={event.start}>
+                    <span aria-hidden="true">
+                      {badge.day} {badge.month}
+                    </span>
+                    <span class="sr-only">{formatDateRange(event)}</span>
+                  </time>
+                  <span>
+                    <span class="events__name font-serif block">
+                      {event.title}
+                    </span>
+                    <span class="caption mt-2 block opacity-70">
+                      {event.place}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ) : (
+        /* A real state, not a defensive branch: between trimesters the calendar
+           genuinely empties. Saying so beats an empty section, and points at the
+           place announcements actually happen. */
+        <p class="text-lead font-serif mt-12">
+          No hikes on the calendar right now. New ones are announced first on{" "}
           <a
-            class="events__cta rounded-pill px-control-inline py-control-block gap-control-gap eyebrow bg-cream text-olive-dark mt-8 inline-flex w-fit items-center"
-            href={links.campusGroups}
+            class="events__link"
+            href={links.whatsapp}
             target="_blank"
             rel="noreferrer"
-            data-join
           >
-            Join this hike
+            WhatsApp
+          </a>{" "}
+          and{" "}
+          <a
+            class="events__link"
+            href={links.instagram}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Instagram
           </a>
-        </article>
-
-        {/* An ordered list because the order is the meaning: these are the
-            hikes queued behind the next one. */}
-        <ol class="events__queue grid gap-1">
-          {queue.map((event, index) => {
-            const badge = formatBadge(event);
-            return (
-              <li class="events__row py-5 flex items-baseline gap-5">
-                {/* Position in the queue, decorative: the list order already
-                  conveys it to anyone not looking at the page. */}
-                <span
-                  class="caption events__index opacity-45"
-                  aria-hidden="true"
-                >
-                  {String(index + 2).padStart(2, "0")}
-                </span>
-                <time class="caption events__date" datetime={event.start}>
-                  <span aria-hidden="true">
-                    {badge.day} {badge.month}
-                  </span>
-                  <span class="sr-only">{formatDateRange(event)}</span>
-                </time>
-                <span class="grow">
-                  <span class="block text-body font-semibold">
-                    {event.title}
-                  </span>
-                  <span class="block text-body opacity-70">{event.place}</span>
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      </div>
-    ) : (
-      /* A real state, not a defensive branch: between trimesters the calendar
-         genuinely empties. Saying so beats an empty section, and points at the
-         place announcements actually happen. */
-      <p class="text-lead font-serif mx-auto mt-12 max-w-5xl">
-        No hikes on the calendar right now. New ones are announced first on{" "}
-        <a
-          class="events__link"
-          href={links.whatsapp}
-          target="_blank"
-          rel="noreferrer"
-        >
-          WhatsApp
-        </a>{" "}
-        and{" "}
-        <a
-          class="events__link"
-          href={links.instagram}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Instagram
-        </a>
-        .
-      </p>
-    )
-  }
+          .
+        </p>
+      )
+    }
+  </div>
 </section>
 
 <style>
-  /* The featured card and the queue share a row from the point there is room
-     for both. Below that the card leads and the queue follows. */
+  /* The photograph and the queue share a row from the point there is room for
+     both. Below that the photo leads and the queue follows. The photo takes the
+     narrower column: it is portrait, and the queue carries more text. */
   @media (width >= 60rem) {
     .events__layout {
-      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr);
       gap: var(--spacing-gutter);
+    }
+  }
+
+  /* Portrait, and tall enough that the arch reads as a shape rather than a
+     rounded corner. Bounded so it cannot dominate a short laptop screen. */
+  .events__next {
+    min-height: clamp(30rem, 58vw, 44rem);
+  }
+
+  /* Darkens towards the base so the date, title and pill hold contrast over
+     whatever part of the photo sits behind them. Same construction as the
+     hero's scrim, derived from a token rather than a literal colour. */
+  .events__scrim {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-black) 4%, transparent),
+      color-mix(in srgb, var(--color-black) 78%, transparent)
+    );
+  }
+
+  /* Pinned to the top corner, matching the padding of the card it sits in, so
+     it reads as a label on the frame rather than part of the stack below. */
+  .events__label {
+    top: 2rem;
+    left: 2rem;
+    opacity: 0.85;
+  }
+
+  @media (width >= 40rem) {
+    .events__label {
+      top: 2.5rem;
+      left: 2.5rem;
     }
   }
 
@@ -149,10 +196,10 @@ const nextBadge = next ? formatBadge(next) : null;
     line-height: 0.8;
   }
 
-  .events__next {
-    /* Lifts the card off the paper tone without a border. */
-    box-shadow: 0 1rem 2.5rem
-      color-mix(in srgb, var(--color-ink) 14%, transparent);
+  .events__title {
+    font-size: var(--text-statement);
+    line-height: 0.95;
+    letter-spacing: var(--text-statement--letter-spacing);
   }
 
   .events__cta {
@@ -170,22 +217,30 @@ const nextBadge = next ? formatBadge(next) : null;
     transform: translateY(0) scale(0.985);
   }
 
-  /* Hairlines between rows rather than around them, so the queue reads as one
-     list. Derived from the tone's own foreground, so it works on any tone. */
-  .events__row + .events__row {
-    border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  /* A ledger: one firm rule opening the list, hairlines between the rows.
+     Both derived from the tone's own foreground, so this works on any tone. */
+  .events__queue {
+    border-top: 2px solid currentColor;
+  }
+
+  .events__row {
+    grid-template-columns: 6rem minmax(0, 1fr);
+    min-height: 7rem;
+    padding-block: 1.25rem;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 30%, transparent);
   }
 
   /* Tabular so the dates form a column even with different digit widths. */
-  .events__index,
   .events__date {
     font-variant-numeric: tabular-nums;
+    color: var(--tone-accent);
+    align-self: center;
   }
 
-  .events__date {
-    /* Wide enough for "23–25 OCT–NOV" without reflowing the titles. */
-    flex: 0 0 auto;
-    min-width: 5.5rem;
+  .events__name {
+    font-size: var(--text-title);
+    line-height: 1;
+    letter-spacing: var(--text-title--letter-spacing);
   }
 
   .events__link {

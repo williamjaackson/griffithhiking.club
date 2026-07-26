@@ -52,6 +52,14 @@ collections:
             label: Photo caption
             widget: string
             hint: Names the place in the photo, so change it when you change the photo.
+          - name: eventsPhoto
+            label: Upcoming hikes photograph
+            widget: image
+            hint: The tall photo beside the hike list.
+          - name: eventsPhotoAlt
+            label: Upcoming hikes photo description
+            widget: string
+            hint: Describes the photo for anyone who cannot see it. Required.
           - name: statement
             label: The line
             widget: text

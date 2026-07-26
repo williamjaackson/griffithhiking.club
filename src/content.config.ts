@@ -24,6 +24,13 @@ const home = defineCollection({
         .string()
         .regex(/^[\d.%a-z\s]+$/i, "must be a CSS object-position value")
         .default("50% 54%"),
+      /** The photograph behind the next departure. Belongs to the page rather
+       *  than to any one hike: only the soonest event shows a photo, so a field
+       *  on every event would ask editors to upload photos that never appear. */
+      eventsPhoto: image(),
+      eventsPhotoAlt: z
+        .string()
+        .min(1, "the events photo shows people, so it needs a description"),
       /** Names the place in the photo, so it has to change when the photo does. */
       caption: z.string(),
       statement: z.string(),
