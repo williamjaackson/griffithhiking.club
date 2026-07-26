@@ -1,0 +1,4 @@
+# esbuild's postinstall links its platform binary, which Astro's build needs.
+# Declared here so CI installs match local without an interactive approval.
+allowBuilds:
+  esbuild: true
