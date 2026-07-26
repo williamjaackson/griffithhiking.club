@@ -1,0 +1,120 @@
+---
+import { Picture } from "astro:assets";
+import sunsetFriends from "../assets/sunset-friends.jpg";
+import rainforestLight from "../assets/rainforest-light.jpg";
+import forestFriends from "../assets/forest-friends.jpg";
+
+const frames = [
+  {
+    src: sunsetFriends,
+    alt: "Friends together in warm sunset light",
+    caption: "01 / People",
+  },
+  {
+    src: rainforestLight,
+    alt: "Sunlight through the rainforest",
+    caption: "02 / Place",
+  },
+  {
+    src: forestFriends,
+    alt: "Hikers beneath tall trees",
+    caption: "03 / Weekend",
+  },
+];
+---
+
+<section class="py-section" data-tone="ink" aria-label="Club moments">
+  {/* A centre-snapping scroll rail on a phone, a three-up grid from 52rem. */}
+  <div class="rail">
+    {
+      frames.map((f) => (
+        <figure>
+          <Picture
+            class="rail__photo"
+            src={f.src}
+            alt={f.alt}
+            formats={["avif", "webp"]}
+            fallbackFormat="jpeg"
+            widths={[480, 780, 1100]}
+            sizes="(min-width: 52rem) 30vw, 78vw"
+            quality={70}
+          />
+          <figcaption class="caption mt-3" style="color: var(--tone-accent)">
+            {f.caption}
+          </figcaption>
+        </figure>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .rail {
+    /* Stated once: the item width and gap drive the centring spacers below, so
+       the three cannot disagree. */
+    --rail-item: min(78vw, 30rem);
+    --rail-gap: 0.85rem;
+
+    display: flex;
+    gap: var(--rail-gap);
+    /* Full bleed on purpose - the spacers provide the inset, which is what lets
+       the neighbouring frames peek in from the edges. */
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    /* Snap targets align to the snapport, so without this the rail refuses to
+       rest anywhere except with an item flush to the left edge. */
+    scroll-padding-inline: 0;
+    scrollbar-width: none;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Half the leftover width, less the gap, so the first and last frames can
+     still reach the centre. Without these the rail can only centre the middle
+     item, and the outer two sit off-centre with nowhere to scroll. */
+  .rail::before,
+  .rail::after {
+    content: "";
+    flex: 0 0 calc((100% - var(--rail-item)) / 2 - var(--rail-gap));
+  }
+
+  .rail > figure {
+    flex: 0 0 var(--rail-item);
+    margin: 0;
+    scroll-snap-align: center;
+  }
+
+  .rail__photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    /* The mockup's muted treatment: every editorial photo is desaturated and
+       warmed slightly so the greens sit together. Stays local until the second
+       gallery needs it, then it becomes a utility. */
+    filter: saturate(0.68) sepia(0.12);
+  }
+
+  /* Three-up from here: no scrolling, no snapping, no spacers. */
+  @media (width >= 52rem) {
+    .rail {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding-inline: var(--spacing-gutter);
+      overflow-x: visible;
+      scroll-snap-type: none;
+    }
+
+    .rail::before,
+    .rail::after {
+      display: none;
+    }
+
+    .rail > figure {
+      flex: none;
+    }
+  }
+</style>

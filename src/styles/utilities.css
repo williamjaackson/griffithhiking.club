@@ -17,3 +17,15 @@
   font-weight: 800;
   text-transform: uppercase;
 }
+
+/* Photo credits and image captions. Same size as an eyebrow but unweighted and
+ * wider tracked, which is what makes it read as annotation rather than a label.
+ * Deliberately not an eyebrow variant - the two were drifting apart by hand in
+ * the hero and the photo rail before this existed. Colour comes from context. */
+@utility caption {
+  font-size: var(--text-eyebrow);
+  line-height: var(--text-eyebrow--line-height);
+  letter-spacing: 0.15em;
+  font-weight: 400;
+  text-transform: uppercase;
+}
