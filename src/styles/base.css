@@ -94,15 +94,15 @@
     top: 0;
     z-index: 100;
     padding: 0.75rem 1.25rem;
-    border-radius: 0 0 var(--radius-card) var(--radius-card);
     background-color: var(--color-olive-dark);
     color: var(--color-cream);
     font-size: var(--text-eyebrow);
     font-weight: 800;
     letter-spacing: var(--text-eyebrow--letter-spacing);
     text-transform: uppercase;
+    /* Appears instantly on focus. No transition, so this needs no motion
+     * tokens - and a skip link should not make a keyboard user wait. */
     transform: translateY(-100%);
-    transition: transform var(--duration-fast) var(--ease-soft);
   }
   .skip-link:focus-visible {
     transform: translateY(0);

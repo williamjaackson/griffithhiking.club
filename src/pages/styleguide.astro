@@ -6,7 +6,6 @@ import Base from "../layouts/Base.astro";
 const palette = [
   { token: "--color-olive", role: "Primary green. Dark section fill." },
   { token: "--color-olive-dark", role: "Deepest green. Text on light tones." },
-  { token: "--color-moss", role: "Muted green. Reserved." },
   { token: "--color-cream", role: "Default page background." },
   { token: "--color-paper", role: "Alternate light section fill." },
   { token: "--color-sand", role: "Accent on dark tones. Large text only." },
@@ -63,7 +62,7 @@ const scale = [
         palette.map((c) => (
           <li>
             <div
-              class="rounded-card h-24 w-full border border-current/15"
+              class="h-24 w-full border border-current/15"
               style={`background-color: var(${c.token})`}
             />
             <p class="text-eyebrow mt-3 font-mono uppercase">
@@ -89,7 +88,7 @@ const scale = [
     <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {
         tones.map((t) => (
-          <div data-tone={t.name} class="rounded-card p-6">
+          <div data-tone={t.name} class="p-6">
             <p class="text-eyebrow font-extrabold uppercase">
               data-tone="{t.name}"
             </p>
@@ -130,44 +129,22 @@ const scale = [
     </div>
   </section>
 
-  <!-- shape, depth, motion -->
+  <!-- shape -->
   <section data-tone="ink" class="px-gutter py-section">
-    <h2 class="text-title font-serif">Shape, depth and motion</h2>
-    <div class="mt-10 grid gap-8 sm:grid-cols-3">
+    <h2 class="text-title font-serif">Shape</h2>
+    <p class="text-body mt-3 max-w-[56ch]">
+      Two shapes only. Everything else is square.
+    </p>
+    <div class="mt-10 grid gap-8 sm:grid-cols-2">
       <div>
         <p class="text-eyebrow font-mono uppercase opacity-60">radius-pill</p>
         <div class="rounded-pill mt-3 h-16 w-full bg-cream"></div>
       </div>
       <div>
-        <p class="text-eyebrow font-mono uppercase opacity-60">radius-card</p>
-        <div class="rounded-card mt-3 h-16 w-full bg-cream"></div>
-      </div>
-      <div>
         <p class="text-eyebrow font-mono uppercase opacity-60">
           radius-organic
         </p>
-        <div class="rounded-organic mt-3 h-16 w-full bg-cream"></div>
-      </div>
-      <div>
-        <p class="text-eyebrow font-mono uppercase opacity-60">shadow-lift</p>
-        <div class="rounded-card shadow-lift mt-3 h-16 w-full bg-cream"></div>
-      </div>
-      <div>
-        <p class="text-eyebrow font-mono uppercase opacity-60">
-          shadow-lift-strong
-        </p>
-        <div class="rounded-card shadow-lift-strong mt-3 h-16 w-full bg-cream">
-        </div>
-      </div>
-      <div>
-        <p class="text-eyebrow font-mono uppercase opacity-60">
-          ease-soft · duration-fast
-        </p>
-        <div
-          class="rounded-card ease-soft mt-3 h-16 w-full bg-cream transition-transform hover:translate-x-4"
-          style="transition-duration: var(--duration-fast)"
-        >
-        </div>
+        <div class="rounded-organic mt-3 h-24 w-full bg-cream"></div>
       </div>
     </div>
   </section>
