@@ -1,0 +1,7 @@
+dist/
+.astro/
+pnpm-lock.yaml
+
+# Prettier does not read .gitignore, so the local-only mockup needs listing
+# here too, or `format:check` fails locally while passing in CI.
+mockup/
