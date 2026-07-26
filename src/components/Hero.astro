@@ -1,0 +1,259 @@
+---
+import { Image, Picture } from "astro:assets";
+import heroPhoto from "../assets/hero-pats-bluff.jpg";
+import clubLogo from "../assets/club-logo.png";
+
+// Step one of joining. Rendered as a real link so it works without JavaScript;
+// the membership dialog will intercept the click when it is built.
+const campusGroupsUrl =
+  "https://griffith.campusgroups.com/Hikingclub/club_signup";
+---
+
+<section class="hero" data-tone="olive">
+  {
+    /* Decorative backdrop: the headline carries the message, and the scrim over
+      it means the photo is atmosphere rather than information. */
+  }
+  {
+    /* Widths stop at 1280 because that is the source width - asking for more
+      would only upscale. AVIF first, WebP next, JPEG as the floor. */
+  }
+  <Picture
+    class="hero__photo"
+    src={heroPhoto}
+    alt=""
+    formats={["avif", "webp"]}
+    fallbackFormat="jpeg"
+    widths={[640, 960, 1280]}
+    quality={70}
+    sizes="100vw"
+    loading="eager"
+    fetchpriority="high"
+  />
+  <div class="hero__scrim"></div>
+
+  <nav class="hero__corners" aria-label="Club">
+    <a class="hero__logo" href="/">
+      <Image
+        class="hero__mark"
+        src={clubLogo}
+        alt="Griffith Hiking Club"
+        width={180}
+        height={180}
+        loading="eager"
+      />
+    </a>
+    <a
+      class="hero__cta"
+      href={campusGroupsUrl}
+      target="_blank"
+      rel="noreferrer"
+    >
+      Join the club
+      <svg
+        class="hero__arrow"
+        viewBox="0 0 20 20"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M3.5 10h13M11 4.5 16.5 10 11 15.5"></path>
+      </svg>
+    </a>
+  </nav>
+
+  <div class="hero__title">
+    <p class="text-eyebrow font-extrabold uppercase">
+      Griffith Hiking Club · Gold Coast
+    </p>
+    <h1 class="text-hero font-display">Weekend<br />adventures.</h1>
+  </div>
+
+  <span class="hero__location text-eyebrow uppercase"
+    >Pats Bluff · Lamington NP · Sunset</span
+  >
+</section>
+
+<style>
+  /* One height rule instead of the mockup's three breakpoint variants: svh
+     tracks the visible viewport on mobile, and the min/max keep it sane on a
+     short laptop or a tall desktop. */
+  .hero {
+    position: relative;
+    isolation: isolate;
+    height: 100svh;
+    min-height: 42rem;
+    max-height: 56rem;
+    overflow: hidden;
+  }
+
+  .hero__photo {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Keeps the group of hikers in frame as the crop narrows. */
+    object-position: 54% 48%;
+  }
+
+  /* Two layers, both derived from a token rather than literal colours:
+     1. a vignette, pulling the corners down so the frame feels like a lens
+        rather than a flat crop - deliberately weak, and fully clear through
+        the middle where the photo does the work;
+     2. the scrim, darkening towards the base so the headline holds contrast
+        over any part of the photo underneath it. */
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(
+        130% 90% at 50% 42%,
+        transparent 70%,
+        color-mix(in srgb, var(--color-black) 13%, transparent) 100%
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-black) 6%, transparent),
+        color-mix(in srgb, var(--color-black) 72%, transparent)
+      );
+  }
+
+  /* Entrance: eyebrow, then headline, then pill, so the eye is led top-down
+     rather than everything arriving at once. The caption is deliberately left
+     out - it is a static credit, not part of the sequence.
+     The delays are local sequencing rather than system values, so they stay here.
+     Animates `translate`, not `transform`: a filled animation holds whatever
+     property it animates, and using `transform` here would silently kill the
+     pill's hover lift and press. Neutered by the base layer's reduced-motion rule. */
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      translate: 0 1rem;
+    }
+  }
+
+  .hero__title > *,
+  .hero__cta {
+    animation: hero-rise var(--duration-entrance) var(--ease-soft) both;
+  }
+
+  .hero__title h1 {
+    animation-delay: 100ms;
+  }
+
+  .hero__cta {
+    animation-delay: 280ms;
+  }
+
+  .hero__corners {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
+
+  .hero__logo {
+    position: absolute;
+    top: var(--spacing-gutter-block);
+    left: var(--spacing-gutter);
+  }
+
+  .hero__mark {
+    width: clamp(3.75rem, 3.25rem + 2vw, 5.5rem);
+    height: auto;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    object-fit: cover;
+    /* Drops the mark's dark ground into the photo behind it. */
+    mix-blend-mode: screen;
+  }
+
+  /* The primary call to action. Reads as a pressable pill rather than a mark:
+     solid fill, lifted off the photo, with a direction cue. */
+  .hero__cta {
+    position: absolute;
+    right: var(--spacing-gutter);
+    bottom: var(--spacing-gutter-block);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-control-gap);
+    padding: var(--spacing-control-block) var(--spacing-control-inline);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-cream);
+    color: var(--color-olive-dark);
+    box-shadow: 0 0.9rem 2.2rem
+      color-mix(in srgb, var(--color-ink) 34%, transparent);
+    font-size: var(--text-eyebrow);
+    font-weight: 800;
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      box-shadow var(--duration-base) ease,
+      background-color var(--duration-base) ease;
+  }
+
+  .hero__cta:hover {
+    transform: translateY(-2px);
+    background-color: var(--color-white);
+    box-shadow: 0 1.3rem 2.9rem
+      color-mix(in srgb, var(--color-ink) 42%, transparent);
+  }
+
+  .hero__cta:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  .hero__arrow {
+    width: 1.1em;
+    height: 1.1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--duration-base) var(--ease-soft);
+  }
+
+  .hero__cta:hover .hero__arrow {
+    transform: translateX(3px);
+  }
+
+  .hero__title {
+    position: absolute;
+    z-index: 1;
+    left: var(--spacing-gutter);
+    right: var(--spacing-gutter);
+    bottom: clamp(6rem, 4rem + 8vw, 9rem);
+  }
+
+  .hero__title h1 {
+    margin-top: 1.75rem;
+    /* Applied in CSS rather than in the markup so the text stays sentence case
+       for screen readers, which can spell out literal all-caps strings. */
+    text-transform: uppercase;
+    /* Caps have no descenders, so the token's 0.82 leading - calibrated for
+       mixed case - reads loose here. Tightened to sit as close as the mockup. */
+    line-height: 0.78;
+  }
+
+  .hero__location {
+    position: absolute;
+    z-index: 1;
+    top: 45%;
+    right: var(--spacing-gutter);
+    writing-mode: vertical-rl;
+    letter-spacing: 0.16em;
+    opacity: 0.85;
+  }
+
+  /* The vertical strip and the pill both sit on the right edge; below this the
+     hero is too narrow for them to coexist. */
+  @media (max-width: 40rem) {
+    .hero__location {
+      display: none;
+    }
+  }
+</style>
