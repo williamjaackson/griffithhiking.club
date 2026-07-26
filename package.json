@@ -13,7 +13,8 @@
     "check": "astro check",
     "check:tokens": "bash scripts/check-tokens.sh",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:cms": "node scripts/check-cms-fields.mjs"
   },
   "packageManager": "pnpm@11.17.0",
   "dependencies": {
@@ -29,6 +30,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "yaml": "^2.9.0"
   }
 }
