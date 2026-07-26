@@ -1,0 +1,107 @@
+/* The only file in the project allowed to contain raw values.
+ * Enforced by scripts/check-tokens.sh, which fails the build if a hex colour
+ * or a px font-size appears anywhere else under src/.
+ *
+ * The type scale is fluid: each step interpolates between a 360px and a 1440px
+ * viewport, so there are no per-breakpoint font-size overrides anywhere.
+ * Sizes are in rem rather than px so they respect a reader's browser font-size
+ * setting - the mockup's 1,426 px values ignored it entirely.
+ */
+@theme {
+  /* ---- palette ------------------------------------------------------- */
+  --color-olive: #4d642d;
+  --color-olive-dark: #31411d;
+  --color-cream: #f2eddf;
+  --color-paper: #e8dfcc;
+  --color-sand: #c9b98e;
+  --color-ink: #292b24;
+  --color-white: #faf7ef;
+  /* True black, for scrims and vignettes only. --color-ink carries a green cast
+   * that reads as a grey wash when used at low opacity over a photo. */
+  --color-black: #000000;
+
+  /* ---- families ------------------------------------------------------ */
+  /* Anton replaces Impact, which is absent on most Android and has
+   * inconsistent metrics across platforms. */
+  --font-display: "Anton", Impact, sans-serif;
+  --font-serif: "Newsreader", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* ---- type scale ---------------------------------------------------- */
+  /* Each step carries its own leading and tracking, so `text-hero` applies all
+   * three at once and they can never be set inconsistently. */
+
+  /* 11px -> 12px. Small uppercase labels; barely scales on purpose. */
+  --text-eyebrow: clamp(0.6875rem, 0.6667rem + 0.0926vw, 0.75rem);
+  --text-eyebrow--line-height: 1.4;
+  --text-eyebrow--letter-spacing: 0.14em;
+
+  /* 15px -> 17px. Body copy. */
+  --text-body: clamp(0.9375rem, 0.8958rem + 0.1852vw, 1.0625rem);
+  --text-body--line-height: 1.6;
+
+  /* 18px -> 22px. Standfirsts and intros. */
+  --text-lead: clamp(1.125rem, 1.0417rem + 0.3704vw, 1.375rem);
+  --text-lead--line-height: 1.5;
+
+  /* 26px -> 46px. Card and event titles. */
+  --text-title: clamp(1.625rem, 1.2083rem + 1.8519vw, 2.875rem);
+  --text-title--line-height: 1.1;
+  --text-title--letter-spacing: -0.02em;
+
+  /* 40px -> 92px. Section headings. */
+  --text-section: clamp(2.5rem, 1.4167rem + 4.8148vw, 5.75rem);
+  --text-section--line-height: 0.94;
+  --text-section--letter-spacing: -0.03em;
+
+  /* 30px -> 78px. The centred serif statement. */
+  --text-statement: clamp(1.875rem, 0.875rem + 4.4444vw, 4.875rem);
+  --text-statement--line-height: 1.02;
+  --text-statement--letter-spacing: -0.035em;
+
+  /* 52px -> 160px. Hero and footer headline. */
+  --text-hero: clamp(3.25rem, 1rem + 10vw, 10rem);
+  --text-hero--line-height: 0.82;
+  --text-hero--letter-spacing: -0.01em;
+
+  /* ---- space ---------------------------------------------------------
+   * Both interpolate between a 360px and a 1440px viewport and reach their
+   * maximum exactly at 1440. The endpoints are asserted, not eyeballed - an
+   * earlier hand-written slope here was shallow enough that the gutter only
+   * reached 34px on a 1440px screen instead of its stated maximum.
+   */
+  /* Side and top/bottom insets are deliberately uneven: identical at 360px, and
+   * by 1440px the sides sit 1.5x further in than the top and bottom. */
+  /* 22px -> 72px. Left and right page gutter. */
+  --spacing-gutter: clamp(1.375rem, 0.3333rem + 4.6296vw, 4.5rem);
+  /* 22px -> 48px. Top and bottom inset against a viewport edge. */
+  --spacing-gutter-block: clamp(1.375rem, 0.8333rem + 2.4074vw, 3rem);
+  /* 56px -> 144px. Vertical rhythm between sections. */
+  --spacing-section: clamp(3.5rem, 1.6667rem + 8.1481vw, 9rem);
+
+  /* ---- controls -------------------------------------------------------
+   * One definition of a pill control's metrics, so every button matches
+   * without each one re-deciding.
+   */
+  --spacing-control-block: 1.3rem;
+  --spacing-control-inline: 1.85rem;
+  --spacing-control-gap: 0.85rem;
+
+  /* ---- shape ---------------------------------------------------------
+   * Two shapes only: a pill for buttons, and the mockup's arch-topped
+   * silhouette for cards. Everything else is square.
+   */
+  --radius-pill: 999px;
+  --radius-organic: 46% 46% 0.5rem 0.5rem / 8% 8% 0.5rem 0.5rem;
+
+  /* ---- motion ---------------------------------------------------------
+   * Removed earlier while nothing used them; back because the hero's call to
+   * action needs this pairing in four places. Slower and softer than a plain
+   * ease, matching the mockup's feel.
+   */
+  --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* Interaction: hover, press, focus. */
+  --duration-base: 280ms;
+  /* First-paint arrival. Long enough to read as a rise rather than a flash. */
+  --duration-entrance: 700ms;
+}

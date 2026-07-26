@@ -28,6 +28,9 @@ jobs:
 
       - run: pnpm format:check
 
+      # Raw values may only live in the token layer.
+      - run: pnpm check:tokens
+
       # Type-checks .astro templates as well as .ts. Requires TypeScript 6.x:
       # the 7.x native compiler does not expose the API this relies on.
       - run: pnpm check
