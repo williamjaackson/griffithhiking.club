@@ -57,23 +57,42 @@ leaked `VPS_SSH_KEY` cannot reach the rest of the server.
 It also can't live under `/root` — nginx workers run as `www-data` and cannot
 traverse `/root` (mode 700). Hence `/srv/www`.
 
+## TLS
+
+Cloudflare sits in front of this site, so the origin uses a **Cloudflare Origin
+CA certificate** rather than Let's Encrypt:
+
+| Path                                          | Mode          |
+| --------------------------------------------- | ------------- |
+| `/etc/ssl/griffithhiking.club-origin.pem`     | 644 root:root |
+| `/etc/ssl/griffithhiking.club-origin-key.pem` | 600 root:root |
+
+It covers `griffithhiking.club` and `*.griffithhiking.club`, expires **2041**, and
+needs no renewal timer or certbot. It is only trusted by Cloudflare, which is why
+verifying the origin directly needs `curl -k`.
+
+**Cloudflare must be set to SSL/TLS mode Full (strict).** Anything less either
+leaves the Cloudflare-to-origin leg in plaintext (Flexible) or fails to validate.
+
+**Port 80 deliberately serves content instead of redirecting to HTTPS.** If
+Cloudflare's SSL mode is ever Flexible it fetches the origin over HTTP, and a 301
+to HTTPS would then loop forever. Visitor-facing HTTPS enforcement is
+Cloudflare's "Always Use HTTPS" setting, not nginx's job here.
+
+The `:80` and `:443` blocks share `/etc/nginx/snippets/griffithhiking.club.conf`
+so the serving rules exist in one place.
+
 ## Still outstanding
 
-**DNS.** `griffithhiking.club` is still on Hostinger's parking nameservers
-(`hyperion.dns-parking.com`) pointing at `2.57.91.91`. It needs an `A` record to
-`72.61.210.78`. Until then the site is only reachable by sending a `Host` header.
-
-**TLS.** No certificate yet — the nginx block listens on port 80 only, because
-certbot cannot validate a domain that does not resolve here. Once DNS points at
-the VPS:
+**DNS.** As of writing, the `.club` registry still delegates
+`griffithhiking.club` to Hostinger's parking nameservers. Check propagation with:
 
 ```bash
-ssh root@72.61.210.78
-certbot --nginx -d griffithhiking.club -d www.griffithhiking.club
+dig +short NS griffithhiking.club @1.1.1.1
 ```
 
-That rewrites the server block for 443 and installs a renewal timer, matching
-how `griffithict.club` is already set up on this box.
+Once that returns `*.ns.cloudflare.com`, the domain is live. Until then the origin
+is reachable only by sending a `Host` header or using `curl --resolve`.
 
 ## Adding another site later
 
