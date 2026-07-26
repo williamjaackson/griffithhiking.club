@@ -3,6 +3,7 @@ import { Image, Picture } from "astro:assets";
 import { getEntry } from "astro:content";
 import clubLogo from "../assets/club-logo.png";
 import { links } from "../lib/links";
+import Lines from "./Lines.astro";
 
 // The mark stays in src/assets: it is the club's identity, not editable content.
 const home = await getEntry("home", "index");
@@ -68,12 +69,8 @@ const { eyebrow, headline, photo, photoAlt, focalPoint, caption } = home!.data;
 
   <div class="hero__title absolute z-10 right-gutter left-gutter">
     <p class="eyebrow">{eyebrow}</p>
-    {
-      /* No <br />: the break comes from text-wrap: balance in the base layer, so
-        an editor never has to type markup to control the line. */
-    }
     <h1 class="hero__headline text-hero font-display mt-7 uppercase">
-      {headline}
+      <Lines text={headline} />
     </h1>
   </div>
 

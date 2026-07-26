@@ -1,5 +1,6 @@
 ---
 import { getEntry } from "astro:content";
+import Lines from "./Lines.astro";
 
 // The club's line, on its own. No eyebrow, no supporting copy - the whole point
 // is that it sits alone.
@@ -11,7 +12,7 @@ const home = await getEntry("home", "index");
   data-tone="cream"
 >
   <h2 class="text-statement font-serif">
-    {home!.data.statement}
+    <Lines text={home!.data.statement} />
   </h2>
 </section>
 
