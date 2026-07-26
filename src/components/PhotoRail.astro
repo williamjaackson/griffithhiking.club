@@ -70,7 +70,12 @@ const frames = [
     gap: var(--rail-gap);
     /* Full bleed on purpose - the spacers provide the inset, which is what lets
        the neighbouring frames peek in from the edges. */
+    /* Both axes stated on purpose. Per spec, `visible` on one axis computes to
+       `auto` when the other is not visible - so `overflow-x: auto` alone would
+       also make this a vertical scroll container, which reads on a phone as
+       being able to scroll past the section. */
     overflow-x: auto;
+    overflow-y: hidden;
     overscroll-behavior-inline: contain;
     scroll-snap-type: x mandatory;
     /* Snap targets align to the snapport, so without this the rail refuses to
@@ -131,6 +136,7 @@ const frames = [
       grid-template-columns: repeat(3, 1fr);
       padding-inline: var(--spacing-gutter);
       overflow-x: visible;
+      overflow-y: visible;
       scroll-snap-type: none;
     }
 

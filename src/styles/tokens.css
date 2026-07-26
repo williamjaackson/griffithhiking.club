@@ -94,7 +94,7 @@
   --radius-pill: 999px;
   /* Flat surfaces: the join sheet and the rows inside it. */
   --radius-card: 0.875rem;
-  --radius-organic: 46% 46% 0.5rem 0.5rem / 8% 8% 0.5rem 0.5rem;
+  --radius-organic: 50% 50% 0.5rem 0.5rem / 22% 22% 0.5rem 0.5rem;
 
   /* ---- motion ---------------------------------------------------------
    * Removed earlier while nothing used them; back because the hero's call to
