@@ -11,6 +11,7 @@ const palette = [
   { token: "--color-sand", role: "Accent on dark tones. Large text only." },
   { token: "--color-ink", role: "Near-black. Body text and dark fills." },
   { token: "--color-white", role: "Warm white. Raised surfaces." },
+  { token: "--color-black", role: "True black. Scrims and vignettes only." },
 ];
 
 const tones = [
@@ -22,7 +23,7 @@ const tones = [
 ];
 
 const scale = [
-  { token: "text-hero", family: "font-display", range: "52 → 190px" },
+  { token: "text-hero", family: "font-display", range: "52 → 160px" },
   { token: "text-section", family: "font-serif", range: "40 → 92px" },
   { token: "text-statement", family: "font-serif", range: "30 → 78px" },
   { token: "text-title", family: "font-serif", range: "26 → 46px" },
@@ -149,6 +150,58 @@ const scale = [
     </div>
   </section>
 
+  <!-- space, controls, motion -->
+  <section data-tone="paper" class="px-gutter py-section">
+    <h2 class="text-title font-serif">Space, controls and motion</h2>
+    <p class="text-body mt-3 max-w-[56ch]">
+      Side and top/bottom insets are deliberately uneven: identical at 360px,
+      and by 1440px the sides sit 1.5&times; further in than the top and bottom.
+      Bars show each value at the current viewport &mdash; resize to watch them
+      move.
+    </p>
+    <ul class="mt-10 space-y-5">
+      {
+        [
+          { token: "--spacing-gutter", note: "22 → 72px · left and right" },
+          {
+            token: "--spacing-gutter-block",
+            note: "22 → 48px · top and bottom",
+          },
+          { token: "--spacing-section", note: "56 → 144px · between sections" },
+        ].map((s) => (
+          <li>
+            <p class="text-eyebrow font-mono uppercase opacity-60">
+              {s.token} · {s.note}
+            </p>
+            <div
+              class="mt-2 h-4"
+              style={`width: var(${s.token}); background-color: var(--tone-accent)`}
+            />
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="mt-12 grid gap-10 sm:grid-cols-2">
+      <div>
+        <p class="text-eyebrow font-mono uppercase opacity-60">
+          control padding · gap
+        </p>
+        <p class="text-body mt-1 opacity-70">
+          One definition of a pill control's metrics.
+        </p>
+        <span class="demo-control mt-4">Join the club</span>
+      </div>
+      <div>
+        <p class="text-eyebrow font-mono uppercase opacity-60">
+          ease-soft · duration-base
+        </p>
+        <p class="text-body mt-1 opacity-70">Hover the bar.</p>
+        <div class="demo-motion mt-4"></div>
+      </div>
+    </div>
+  </section>
+
   <script>
     // Reads each swatch's real computed value so labels cannot go stale.
     const root = getComputedStyle(document.documentElement);
@@ -158,3 +211,33 @@ const scale = [
     }
   </script>
 </Base>
+
+<style>
+  /* Demonstrates the control and motion tokens by using them, so these samples
+     cannot drift from what components get. */
+  .demo-control {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-control-gap);
+    padding: var(--spacing-control-block) var(--spacing-control-inline);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-cream);
+    color: var(--color-olive-dark);
+    font-size: var(--text-eyebrow);
+    font-weight: 800;
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    text-transform: uppercase;
+  }
+
+  .demo-motion {
+    width: 4rem;
+    height: 2.5rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--tone-accent);
+    transition: transform var(--duration-base) var(--ease-soft);
+  }
+
+  .demo-motion:hover {
+    transform: translateX(8rem);
+  }
+</style>
