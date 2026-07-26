@@ -4,7 +4,7 @@
 ---
 
 <section
-  class="statement px-gutter py-section grid place-items-center text-center"
+  class="statement px-gutter pt-8 pb-section sm:pt-section grid place-items-center text-center"
   data-tone="cream"
 >
   <h2 class="text-statement font-serif">
@@ -15,9 +15,19 @@
 <style>
   /* Tall enough that the line is surrounded by air rather than merely padded.
      Not a viewport height: on a short laptop that would crop the next section
-     out of view entirely. */
+     out of view entirely.
+
+     Tighter on a phone, matching the mockup's 451px. Because the content is
+     centred within this box, the height is what actually governs the space
+     above the line - the top padding alone barely moves it. */
   .statement {
-    min-height: min(38rem, 80svh);
+    min-height: min(28rem, 70svh);
+  }
+
+  @media (width >= 40rem) {
+    .statement {
+      min-height: min(38rem, 80svh);
+    }
   }
 
   .statement h2 {
