@@ -1,29 +1,11 @@
 ---
-// Placeholder. Replaced when the home page is built; it exists so the deployed
-// site shows something intentional rather than the Astro starter page.
 import Base from "../layouts/Base.astro";
+import Hero from "../components/Hero.astro";
 ---
 
 <Base
   title="Griffith Hiking Club"
   description="Weekend hiking adventures with Griffith University students across South East Queensland."
 >
-  <section
-    data-tone="olive"
-    class="px-gutter py-section flex min-h-screen flex-col justify-end"
-  >
-    <p
-      class="text-eyebrow font-extrabold uppercase"
-      style="color: var(--tone-accent)"
-    >
-      Griffith University · Gold Coast
-    </p>
-    <h1 class="text-hero font-display mt-6">Weekend<br />adventures.</h1>
-    <p class="text-lead mt-10 max-w-[40ch] opacity-80">
-      Site under construction. The design system lives at <a
-        class="underline"
-        href="/styleguide">/styleguide</a
-      >.
-    </p>
-  </section>
+  <Hero />
 </Base>
