@@ -1,5 +1,6 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
+import { isRealDate } from "./lib/events";
 
 /** Photos live beside their entry rather than in src/assets, because that is
  *  where an entry-relative CMS upload lands. `image()` resolves the bare
@@ -40,4 +41,37 @@ const moments = defineCollection({
     }),
 });
 
-export const collections = { home, moments };
+/** A calendar date, always `YYYY-MM-DD`.
+ *
+ *  Preprocessed because an unquoted `2026-08-02` in YAML parses as a Date, and
+ *  whether the value arrives quoted depends on who wrote the file - a person or
+ *  the CMS. Normalising here means the rest of the site only ever sees a string.
+ *  Slicing the ISO form is exact: the value was parsed as UTC midnight. */
+const eventDate = z.preprocess(
+  (value) => (value instanceof Date ? value.toISOString().slice(0, 10) : value),
+  z
+    .string()
+    .refine(isRealDate, "must be a real calendar date, written as YYYY-MM-DD"),
+);
+
+const events = defineCollection({
+  loader: glob({ pattern: "*.yaml", base: "./src/content/events" }),
+  schema: z
+    .object({
+      title: z.string().min(1, "every event needs a name"),
+      start: eventDate,
+      /** Only for trips spanning more than one day. A single-day hike leaves
+       *  this out entirely rather than repeating the start date. */
+      end: eventDate.optional(),
+      /** Where it is - the park or suburb, not a street address. */
+      place: z.string().min(1, "every event needs a place"),
+      /** The one-line character of the outing: "Sunset hike", "Full day". */
+      detail: z.string(),
+    })
+    .refine((event) => !event.end || event.end >= event.start, {
+      message: "the end date cannot be before the start date",
+      path: ["end"],
+    }),
+});
+
+export const collections = { home, moments, events };

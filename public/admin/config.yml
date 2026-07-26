@@ -84,3 +84,43 @@ collections:
       - name: caption
         label: Caption
         widget: string
+
+  - name: events
+    label: Upcoming hikes
+    description: >-
+      The hike calendar. Past hikes disappear from the site by themselves the day
+      after they finish, so there is no need to delete them.
+    folder: src/content/events
+    extension: yaml
+    format: yaml
+    create: true
+    delete: true
+    sortable_fields: [start, title]
+    summary: "{{start}} · {{title}}"
+    fields:
+      - name: title
+        label: Name
+        widget: string
+        hint: What the hike is called, e.g. Morans Falls.
+      - name: start
+        label: Date
+        widget: datetime
+        date_format: YYYY-MM-DD
+        time_format: false
+        picker_utc: false
+      - name: end
+        label: Last day
+        widget: datetime
+        date_format: YYYY-MM-DD
+        time_format: false
+        picker_utc: false
+        required: false
+        hint: Only for trips over more than one day. Leave empty for a normal hike.
+      - name: place
+        label: Place
+        widget: string
+        hint: The park or suburb, e.g. Lamington National Park.
+      - name: detail
+        label: Kind of outing
+        widget: string
+        hint: One short line, e.g. Sunset hike, Full day, Club social.
