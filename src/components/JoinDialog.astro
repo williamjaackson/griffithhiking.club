@@ -77,6 +77,7 @@ import { joinLinks } from "../lib/links";
     margin: auto auto 0;
     padding: var(--spacing-gutter);
     border: 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     overflow-y: auto;
     /* Animated in and out entirely in CSS: `allow-discrete` lets `display` and
        `overlay` participate, so the closing frames are not skipped. Without
@@ -107,6 +108,8 @@ import { joinLinks } from "../lib/links";
     .join {
       margin: auto;
       translate: 0 1rem;
+      /* Centred from here up, so all four corners are visible. */
+      border-radius: var(--radius-card);
     }
     @starting-style {
       .join[open] {
@@ -195,6 +198,7 @@ import { joinLinks } from "../lib/links";
     align-items: center;
     gap: 1rem;
     padding: 1.1rem 1.25rem;
+    border-radius: var(--radius-card);
     background-color: color-mix(in srgb, var(--tone-fg) 5%, transparent);
     transition:
       background-color var(--duration-base) ease,
