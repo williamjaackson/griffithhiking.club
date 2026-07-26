@@ -1,0 +1,10 @@
+/* Self-hosted from npm, so the files are versioned with the lockfile and the
+ * page makes no third-party requests.
+ *
+ * Anton ships per-subset stylesheets, so latin is requested explicitly.
+ * The variable families ship one stylesheet carrying unicode-range for every
+ * subset, so a browser still only downloads the latin file.
+ */
+@import "@fontsource/anton/latin-400.css";
+@import "@fontsource-variable/newsreader/wght.css";
+@import "@fontsource-variable/inter/wght.css";

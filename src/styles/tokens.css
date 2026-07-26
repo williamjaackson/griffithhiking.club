@@ -1,0 +1,85 @@
+/* The only file in the project allowed to contain raw values.
+ * Enforced by scripts/check-tokens.sh, which fails the build if a hex colour
+ * or a px font-size appears anywhere else under src/.
+ *
+ * The type scale is fluid: each step interpolates between a 360px and a 1440px
+ * viewport, so there are no per-breakpoint font-size overrides anywhere.
+ * Sizes are in rem rather than px so they respect a reader's browser font-size
+ * setting - the mockup's 1,426 px values ignored it entirely.
+ */
+@theme {
+  /* ---- palette ------------------------------------------------------- */
+  --color-olive: #4d642d;
+  --color-olive-dark: #31411d;
+  --color-moss: #788252;
+  --color-cream: #f2eddf;
+  --color-paper: #e8dfcc;
+  --color-sand: #c9b98e;
+  --color-ink: #292b24;
+  --color-white: #faf7ef;
+
+  /* ---- families ------------------------------------------------------ */
+  /* Anton replaces Impact, which is absent on most Android and has
+   * inconsistent metrics across platforms. */
+  --font-display: "Anton", Impact, sans-serif;
+  --font-serif: "Newsreader", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* ---- type scale ---------------------------------------------------- */
+  /* Each step carries its own leading and tracking, so `text-hero` applies all
+   * three at once and they can never be set inconsistently. */
+
+  /* 11px -> 12px. Small uppercase labels; barely scales on purpose. */
+  --text-eyebrow: clamp(0.6875rem, 0.6667rem + 0.0926vw, 0.75rem);
+  --text-eyebrow--line-height: 1.4;
+  --text-eyebrow--letter-spacing: 0.14em;
+
+  /* 15px -> 17px. Body copy. */
+  --text-body: clamp(0.9375rem, 0.8958rem + 0.1852vw, 1.0625rem);
+  --text-body--line-height: 1.6;
+
+  /* 18px -> 22px. Standfirsts and intros. */
+  --text-lead: clamp(1.125rem, 1.0417rem + 0.3704vw, 1.375rem);
+  --text-lead--line-height: 1.5;
+
+  /* 26px -> 46px. Card and event titles. */
+  --text-title: clamp(1.625rem, 1.2083rem + 1.8519vw, 2.875rem);
+  --text-title--line-height: 1.1;
+  --text-title--letter-spacing: -0.02em;
+
+  /* 40px -> 92px. Section headings. */
+  --text-section: clamp(2.5rem, 1.4167rem + 4.8148vw, 5.75rem);
+  --text-section--line-height: 0.94;
+  --text-section--letter-spacing: -0.03em;
+
+  /* 30px -> 78px. The centred serif statement. */
+  --text-statement: clamp(1.875rem, 0.875rem + 4.4444vw, 4.875rem);
+  --text-statement--line-height: 1.02;
+  --text-statement--letter-spacing: -0.035em;
+
+  /* 52px -> 190px. Hero and footer headline. */
+  --text-hero: clamp(3.25rem, 0.375rem + 12.7778vw, 11.875rem);
+  --text-hero--line-height: 0.82;
+  --text-hero--letter-spacing: -0.01em;
+
+  /* ---- space --------------------------------------------------------- */
+  /* 22px -> 56px. Horizontal page gutter. */
+  --spacing-gutter: clamp(1.375rem, 1.1333rem + 1.0741vw, 3.5rem);
+  /* 56px -> 144px. Vertical rhythm between sections. */
+  --spacing-section: clamp(3.5rem, 2.5833rem + 4.0741vw, 9rem);
+
+  /* ---- shape --------------------------------------------------------- */
+  --radius-pill: 999px;
+  --radius-card: 0.5rem;
+  /* The mockup's arch-topped card silhouette. */
+  --radius-organic: 46% 46% 0.5rem 0.5rem / 8% 8% 0.5rem 0.5rem;
+
+  /* ---- depth --------------------------------------------------------- */
+  --shadow-lift: 0 0.875rem 2.2rem rgb(18 26 10 / 0.34);
+  --shadow-lift-strong: 0 1.3rem 2.9rem rgb(18 26 10 / 0.42);
+
+  /* ---- motion -------------------------------------------------------- */
+  --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --duration-fast: 280ms;
+  --duration-slow: 750ms;
+}

@@ -1,0 +1,183 @@
+---
+import Base from "../layouts/Base.astro";
+
+// Token *names* only. The values live in src/styles/tokens.css and are read back
+// at runtime below, so a swatch label can never drift from the real value.
+const palette = [
+  { token: "--color-olive", role: "Primary green. Dark section fill." },
+  { token: "--color-olive-dark", role: "Deepest green. Text on light tones." },
+  { token: "--color-moss", role: "Muted green. Reserved." },
+  { token: "--color-cream", role: "Default page background." },
+  { token: "--color-paper", role: "Alternate light section fill." },
+  { token: "--color-sand", role: "Accent on dark tones. Large text only." },
+  { token: "--color-ink", role: "Near-black. Body text and dark fills." },
+  { token: "--color-white", role: "Warm white. Raised surfaces." },
+];
+
+const tones = [
+  { name: "cream", fg: "9.43:1", accent: "5.65:1" },
+  { name: "paper", fg: "8.33:1", accent: "4.99:1" },
+  { name: "olive", fg: "5.65:1", accent: "3.40:1" },
+  { name: "ink", fg: "12.25:1", accent: "7.38:1" },
+  { name: "sand", fg: "5.68:1", accent: "3.40:1" },
+];
+
+const scale = [
+  { token: "text-hero", family: "font-display", range: "52 → 190px" },
+  { token: "text-section", family: "font-serif", range: "40 → 92px" },
+  { token: "text-statement", family: "font-serif", range: "30 → 78px" },
+  { token: "text-title", family: "font-serif", range: "26 → 46px" },
+  { token: "text-lead", family: "font-sans", range: "18 → 22px" },
+  { token: "text-body", family: "font-sans", range: "15 → 17px" },
+  { token: "text-eyebrow", family: "font-sans", range: "11 → 12px" },
+];
+---
+
+<Base
+  title="Styleguide — Griffith Hiking Club"
+  description="Design tokens, tone pairings and the type scale."
+>
+  <header data-tone="ink" class="px-gutter py-section">
+    <p
+      class="text-eyebrow font-sans font-extrabold uppercase"
+      style="color: var(--tone-accent)"
+    >
+      Foundation
+    </p>
+    <h1 class="text-section font-serif mt-4">Styleguide</h1>
+    <p class="text-lead font-sans mt-6 max-w-[46ch] opacity-80">
+      Every colour, tone pairing and type step in the system. If a value is not
+      on this page, it does not exist.
+    </p>
+  </header>
+
+  <!-- palette -->
+  <section data-tone="cream" class="px-gutter py-section">
+    <h2 class="text-title font-serif">Palette</h2>
+    <p class="text-body mt-3 max-w-[56ch]">
+      Defined once in <code>src/styles/tokens.css</code>. Components reference
+      tone variables rather than these directly.
+    </p>
+    <ul class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        palette.map((c) => (
+          <li>
+            <div
+              class="rounded-card h-24 w-full border border-current/15"
+              style={`background-color: var(${c.token})`}
+            />
+            <p class="text-eyebrow mt-3 font-mono uppercase">
+              {c.token}
+              <span class="swatch-value opacity-60" data-token={c.token} />
+            </p>
+            <p class="text-body opacity-70">{c.role}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <!-- tones -->
+  <section data-tone="paper" class="px-gutter py-section">
+    <h2 class="text-title font-serif">Tones</h2>
+    <p class="text-body mt-3 max-w-[56ch]">
+      A section declares <code>data-tone</code>, never a colour. Each tone binds
+      a background, foreground and accent as one validated triple. Every
+      foreground clears AA for body text; accents clear 3:1 and are for large or
+      decorative text only.
+    </p>
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        tones.map((t) => (
+          <div data-tone={t.name} class="rounded-card p-6">
+            <p class="text-eyebrow font-extrabold uppercase">
+              data-tone="{t.name}"
+            </p>
+            <p class="text-title font-serif mt-3">Foreground</p>
+            <p class="text-body mt-2" style="color: var(--tone-accent)">
+              Accent text
+            </p>
+            <p class="text-eyebrow mt-5 uppercase opacity-70">
+              fg {t.fg} · accent {t.accent}
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- type scale -->
+  <section data-tone="cream" class="px-gutter py-section">
+    <h2 class="text-title font-serif">Type scale</h2>
+    <p class="text-body mt-3 max-w-[56ch]">
+      Seven fluid steps, replacing the mockup's 92 <code>clamp()</code> calls of which
+      80 were distinct. Each step carries its own leading and tracking, so one utility
+      applies all three. Resize the window to see them interpolate.
+    </p>
+    <div class="mt-12 space-y-12">
+      {
+        scale.map((s) => (
+          <div>
+            <p class="text-eyebrow font-mono uppercase opacity-60">
+              {s.token} · {s.family} · {s.range}
+            </p>
+            <p class={`${s.token} ${s.family} mt-2`}>
+              The best part of the view
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- shape, depth, motion -->
+  <section data-tone="ink" class="px-gutter py-section">
+    <h2 class="text-title font-serif">Shape, depth and motion</h2>
+    <div class="mt-10 grid gap-8 sm:grid-cols-3">
+      <div>
+        <p class="text-eyebrow font-mono uppercase opacity-60">radius-pill</p>
+        <div class="rounded-pill mt-3 h-16 w-full bg-cream"></div>
+      </div>
+      <div>
+        <p class="text-eyebrow font-mono uppercase opacity-60">radius-card</p>
+        <div class="rounded-card mt-3 h-16 w-full bg-cream"></div>
+      </div>
+      <div>
+        <p class="text-eyebrow font-mono uppercase opacity-60">
+          radius-organic
+        </p>
+        <div class="rounded-organic mt-3 h-16 w-full bg-cream"></div>
+      </div>
+      <div>
+        <p class="text-eyebrow font-mono uppercase opacity-60">shadow-lift</p>
+        <div class="rounded-card shadow-lift mt-3 h-16 w-full bg-cream"></div>
+      </div>
+      <div>
+        <p class="text-eyebrow font-mono uppercase opacity-60">
+          shadow-lift-strong
+        </p>
+        <div class="rounded-card shadow-lift-strong mt-3 h-16 w-full bg-cream">
+        </div>
+      </div>
+      <div>
+        <p class="text-eyebrow font-mono uppercase opacity-60">
+          ease-soft · duration-fast
+        </p>
+        <div
+          class="rounded-card ease-soft mt-3 h-16 w-full bg-cream transition-transform hover:translate-x-4"
+          style="transition-duration: var(--duration-fast)"
+        >
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Reads each swatch's real computed value so labels cannot go stale.
+    const root = getComputedStyle(document.documentElement);
+    for (const el of document.querySelectorAll<HTMLElement>(".swatch-value")) {
+      const token = el.dataset.token;
+      if (token) el.textContent = ` ${root.getPropertyValue(token).trim()}`;
+    }
+  </script>
+</Base>
