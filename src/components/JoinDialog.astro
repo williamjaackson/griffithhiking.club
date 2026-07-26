@@ -1,0 +1,337 @@
+---
+import { joinLinks } from "../lib/links";
+---
+
+{
+  /* A native <dialog>, so focus trapping, Escape, focus restore and an inert
+    background all come from the platform rather than from us. Opened by any
+    element carrying data-join, which means the footer CTA can reuse it later
+    without any shared state. */
+}
+<dialog class="join" aria-labelledby="join-title" data-tone="cream">
+  <div class="join__head">
+    <div>
+      <p class="eyebrow" style="color: var(--tone-accent)">Join the club</p>
+      <h2 id="join-title" class="text-title font-serif mt-2">
+        Three places to find us.
+      </h2>
+    </div>
+    <button
+      class="join__close"
+      type="button"
+      data-join-close
+      aria-label="Close"
+    >
+      <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+        <path d="M5 5l10 10M15 5L5 15"></path>
+      </svg>
+    </button>
+  </div>
+
+  <ul class="join__list">
+    {
+      joinLinks.map((l) => (
+        <li>
+          <a
+            class="join__link"
+            href={l.href}
+            target="_blank"
+            rel="noreferrer"
+            data-join-link={l.id}
+          >
+            <span class="join__tick" aria-hidden="true">
+              <svg viewBox="0 0 20 20" focusable="false">
+                <path d="M4 10.5l4 4 8-9" />
+              </svg>
+            </span>
+            <span class="join__body">
+              <b class="text-lead font-serif">{l.name}</b>
+              <em class="text-body">{l.detail}</em>
+            </span>
+            <svg
+              class="join__out"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M5 15L15 5M7 5h8v8" />
+            </svg>
+            <span class="join__state sr-only" />
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</dialog>
+
+<style>
+  /* ---- shell -----------------------------------------------------------
+   * Bottom sheet on a phone, centred card from `sm` up. Square corners because
+   * the system has exactly two shapes - a pill and the arched card - and this is
+   * neither.
+   */
+  .join {
+    width: 100%;
+    max-width: 34rem;
+    max-height: calc(100dvh - 2 * var(--spacing-gutter-block));
+    margin: auto auto 0;
+    padding: var(--spacing-gutter);
+    border: 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    overflow-y: auto;
+    /* Animated in and out entirely in CSS: `allow-discrete` lets `display` and
+       `overlay` participate, so the closing frames are not skipped. Without
+       support the dialog simply appears and disappears. */
+    opacity: 0;
+    translate: 0 1.5rem;
+    transition:
+      opacity var(--duration-base) var(--ease-soft),
+      translate var(--duration-base) var(--ease-soft),
+      overlay var(--duration-base) allow-discrete,
+      display var(--duration-base) allow-discrete;
+  }
+
+  .join[open] {
+    opacity: 1;
+    translate: none;
+  }
+
+  /* The entry frame. Without this the dialog would animate only on close. */
+  @starting-style {
+    .join[open] {
+      opacity: 0;
+      translate: 0 1.5rem;
+    }
+  }
+
+  @media (width >= 40rem) {
+    .join {
+      margin: auto;
+      translate: 0 1rem;
+      /* Centred from here up, so all four corners are visible. */
+      border-radius: var(--radius-card);
+    }
+    @starting-style {
+      .join[open] {
+        translate: 0 1rem;
+      }
+    }
+  }
+
+  /* showModal() makes the page inert but does not stop it scrolling behind the
+     sheet. :has() does it without any JavaScript. :global because body is not
+     part of this component's scope. */
+  :global(body:has(dialog.join[open])) {
+    overflow: hidden;
+  }
+
+  .join::backdrop {
+    background-color: color-mix(in srgb, var(--color-black) 55%, transparent);
+    backdrop-filter: blur(0.5rem);
+    opacity: 0;
+    transition:
+      opacity var(--duration-base) var(--ease-soft),
+      overlay var(--duration-base) allow-discrete,
+      display var(--duration-base) allow-discrete;
+  }
+
+  .join[open]::backdrop {
+    opacity: 1;
+  }
+
+  @starting-style {
+    .join[open]::backdrop {
+      opacity: 0;
+    }
+  }
+
+  /* ---- head ----------------------------------------------------------- */
+  .join__head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .join__close {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background-color: color-mix(in srgb, var(--tone-fg) 8%, transparent);
+    color: inherit;
+    cursor: pointer;
+    transition: background-color var(--duration-base) ease;
+  }
+
+  .join__close:hover {
+    background-color: color-mix(in srgb, var(--tone-fg) 16%, transparent);
+  }
+
+  .join__close svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  /* ---- the three options ---------------------------------------------
+   * Identical treatment for all three: same size, same weight, same affordance.
+   * Nothing here ranks them.
+   */
+  .join__list {
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .join__link {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    border-radius: var(--radius-card);
+    background-color: color-mix(in srgb, var(--tone-fg) 5%, transparent);
+    transition:
+      background-color var(--duration-base) ease,
+      translate var(--duration-base) var(--ease-soft);
+  }
+
+  .join__link:hover {
+    background-color: color-mix(in srgb, var(--tone-fg) 10%, transparent);
+    translate: 0 -2px;
+  }
+
+  .join__body {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .join__body em {
+    font-style: normal;
+    opacity: 0.7;
+  }
+
+  .join__out {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.45;
+  }
+
+  /* ---- the tick ------------------------------------------------------- */
+  .join__tick {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid color-mix(in srgb, var(--tone-fg) 30%, transparent);
+    border-radius: var(--radius-pill);
+    transition:
+      background-color var(--duration-base) ease,
+      border-color var(--duration-base) ease;
+  }
+
+  .join__tick svg {
+    width: 0.9rem;
+    height: 0.9rem;
+    fill: none;
+    stroke: var(--color-cream);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    /* Drawn on, rather than faded in, so the check reads as being made. */
+    stroke-dasharray: 20;
+    stroke-dashoffset: 20;
+    transition: stroke-dashoffset var(--duration-base) var(--ease-soft);
+  }
+
+  .join__link[data-opened] .join__tick {
+    background-color: var(--color-olive);
+    border-color: var(--color-olive);
+  }
+
+  .join__link[data-opened] .join__tick svg {
+    stroke-dashoffset: 0;
+  }
+</style>
+
+<script>
+  const STORE = "ghc:join-opened";
+  const dialog = document.querySelector<HTMLDialogElement>("dialog.join");
+
+  if (dialog) {
+    const linkFor = (id: string) =>
+      dialog.querySelector<HTMLAnchorElement>(`[data-join-link="${id}"]`);
+
+    // Persisted so a returning visitor still sees which ones they have been to.
+    // Wrapped because localStorage throws in some privacy modes.
+    const read = (): string[] => {
+      try {
+        return JSON.parse(localStorage.getItem(STORE) ?? "[]");
+      } catch {
+        return [];
+      }
+    };
+    const write = (ids: string[]) => {
+      try {
+        localStorage.setItem(STORE, JSON.stringify(ids));
+      } catch {
+        /* nothing to do - the tick just will not persist */
+      }
+    };
+
+    const mark = (id: string) => {
+      const link = linkFor(id);
+      if (!link) return;
+      link.dataset.opened = "";
+      const state = link.querySelector(".join__state");
+      if (state) state.textContent = "Opened";
+    };
+
+    read().forEach(mark);
+
+    for (const link of dialog.querySelectorAll<HTMLAnchorElement>(
+      "[data-join-link]",
+    )) {
+      link.addEventListener("click", () => {
+        const id = link.dataset.joinLink;
+        if (!id) return;
+        const ids = read();
+        if (!ids.includes(id)) write([...ids, id]);
+        mark(id);
+      });
+    }
+
+    // Any trigger on the page opens it, so a second CTA needs no extra wiring.
+    for (const trigger of document.querySelectorAll<HTMLElement>(
+      "[data-join]",
+    )) {
+      trigger.addEventListener("click", (event) => {
+        event.preventDefault();
+        dialog.showModal();
+      });
+    }
+
+    for (const close of dialog.querySelectorAll("[data-join-close]")) {
+      close.addEventListener("click", () => dialog.close());
+    }
+
+    // Clicking the backdrop lands on the dialog itself, never on its children.
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+  }
+</script>

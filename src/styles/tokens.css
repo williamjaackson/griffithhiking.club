@@ -88,10 +88,12 @@
   --spacing-control-gap: 0.85rem;
 
   /* ---- shape ---------------------------------------------------------
-   * Two shapes only: a pill for buttons, and the mockup's arch-topped
-   * silhouette for cards. Everything else is square.
+   * A pill for controls, a soft radius for flat surfaces, and the mockup's
+   * arch-topped silhouette for photo cards.
    */
   --radius-pill: 999px;
+  /* Flat surfaces: the join sheet and the rows inside it. */
+  --radius-card: 0.875rem;
   --radius-organic: 46% 46% 0.5rem 0.5rem / 8% 8% 0.5rem 0.5rem;
 
   /* ---- motion ---------------------------------------------------------
