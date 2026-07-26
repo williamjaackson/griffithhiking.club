@@ -3,6 +3,7 @@ import { Picture } from "astro:assets";
 import sunsetFriends from "../assets/sunset-friends.jpg";
 import rainforestLight from "../assets/rainforest-light.jpg";
 import forestFriends from "../assets/forest-friends.jpg";
+import { links } from "../lib/links";
 
 const frames = [
   {
@@ -29,16 +30,26 @@ const frames = [
     {
       frames.map((f) => (
         <figure>
-          <Picture
-            class="rail__photo rounded-organic"
-            src={f.src}
-            alt={f.alt}
-            formats={["avif", "webp"]}
-            fallbackFormat="jpeg"
-            widths={[480, 780, 1100]}
-            sizes="(min-width: 52rem) 30vw, 78vw"
-            quality={70}
-          />
+          <a
+            class="rail__link rounded-organic"
+            href={links.instagram}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Picture
+              class="rail__photo"
+              src={f.src}
+              alt={f.alt}
+              formats={["avif", "webp"]}
+              fallbackFormat="jpeg"
+              widths={[480, 780, 1100]}
+              sizes="(min-width: 52rem) 30vw, 78vw"
+              quality={70}
+            />
+            {/* The alt text names the photo; this names where the link goes, so
+                the accessible name is both rather than just a description. */}
+            <span class="sr-only">on Instagram</span>
+          </a>
           <figcaption class="caption mt-3" style="color: var(--tone-accent)">
             {f.caption}
           </figcaption>
@@ -87,8 +98,14 @@ const frames = [
     scroll-snap-align: center;
   }
 
-  /* The arch-topped silhouette from the token layer, which is what this shape
-     exists for - photo cards. */
+  /* The arch carries the clipping so the silhouette stays fixed while the photo
+     scales inside it. Putting the radius on the image instead would scale the
+     shape too. */
+  .rail__link {
+    display: block;
+    overflow: hidden;
+  }
+
   .rail__photo {
     width: 100%;
     height: auto;
@@ -98,6 +115,13 @@ const frames = [
        warmed slightly so the greens sit together. Stays local until the second
        gallery needs it, then it becomes a utility. */
     filter: saturate(0.68) sepia(0.12);
+    transition: transform var(--duration-base) var(--ease-soft);
+  }
+
+  /* Zoom on hover. Neutered by the base layer's reduced-motion rule. */
+  .rail__link:hover .rail__photo,
+  .rail__link:focus-visible .rail__photo {
+    transform: scale(1.05);
   }
 
   /* Three-up from here: no scrolling, no snapping, no spacers. */
