@@ -47,7 +47,7 @@ const campusGroupsUrl =
       />
     </a>
     <a
-      class="hero__cta absolute right-gutter bottom-gutter-block inline-flex items-center gap-control-gap px-control-inline py-control-block rounded-pill bg-cream text-olive-dark text-eyebrow font-extrabold whitespace-nowrap uppercase"
+      class="hero__cta absolute right-gutter bottom-gutter-block inline-flex items-center gap-control-gap px-control-inline py-control-block rounded-pill bg-cream text-olive-dark eyebrow whitespace-nowrap"
       href={campusGroupsUrl}
       target="_blank"
       rel="noreferrer"
@@ -65,9 +65,7 @@ const campusGroupsUrl =
   </nav>
 
   <div class="hero__title absolute z-10 right-gutter left-gutter">
-    <p class="text-eyebrow font-extrabold uppercase">
-      Griffith Hiking Club · Gold Coast
-    </p>
+    <p class="eyebrow">Griffith Hiking Club · Gold Coast</p>
     <h1 class="hero__headline text-hero font-display mt-7 uppercase">
       Weekend<br />adventures.
     </h1>
@@ -119,6 +117,7 @@ const campusGroupsUrl =
   /* The pill's interaction stays here because its shadow needs color-mix, and
      splitting hover between markup and CSS would read worse than keeping it whole. */
   .hero__cta {
+    animation-delay: 600ms;
     box-shadow: 0 0.9rem 2.2rem
       color-mix(in srgb, var(--color-ink) 34%, transparent);
     transition:
@@ -160,6 +159,7 @@ const campusGroupsUrl =
   /* Caps have no descenders, so the token's 0.82 leading - calibrated for mixed
      case - reads loose here. Tightened to sit as close as the mockup. */
   .hero__headline {
+    animation-delay: 320ms;
     line-height: 0.78;
   }
 
@@ -169,8 +169,9 @@ const campusGroupsUrl =
     letter-spacing: 0.16em;
   }
 
-  /* Entrance: eyebrow, then headline, then pill, so the eye is led top-down
-     rather than everything arriving at once. The caption is deliberately left
+  /* Entrance: three distinct beats - club name, then headline, then pill - so
+     each reads as arriving separately rather than as one movement. The offsets
+     are large relative to the 700ms fade for exactly that reason. The caption is deliberately left
      out - it is a static credit, not part of the sequence.
      Animates `translate`, not `transform`: a filled animation holds whatever
      property it animates, and using `transform` here would silently kill the
@@ -185,13 +186,5 @@ const campusGroupsUrl =
   .hero__title > *,
   .hero__cta {
     animation: hero-rise var(--duration-entrance) var(--ease-soft) both;
-  }
-
-  .hero__headline {
-    animation-delay: 100ms;
-  }
-
-  .hero__cta {
-    animation-delay: 280ms;
   }
 </style>
