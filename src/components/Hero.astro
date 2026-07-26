@@ -14,7 +14,7 @@ import { links } from "../lib/links";
   {
     /* Decorative backdrop: the headline carries the message, and the scrim over
       it means the photo is atmosphere rather than information.
-      Widths stop at 1280 because that is the source width - asking for more
+      Widths stop at 1170 because that is the source width - asking for more
       would only upscale. AVIF first, WebP next, JPEG as the floor. */
   }
   <Picture
@@ -23,7 +23,7 @@ import { links } from "../lib/links";
     alt=""
     formats={["avif", "webp"]}
     fallbackFormat="jpeg"
-    widths={[640, 960, 1280]}
+    widths={[640, 960, 1170]}
     quality={70}
     sizes="100vw"
     loading="eager"
@@ -69,7 +69,7 @@ import { links } from "../lib/links";
   </div>
 
   <span
-    class="hero__location absolute z-10 right-gutter text-eyebrow uppercase opacity-85 max-sm:hidden"
+    class="hero__location caption absolute z-10 right-gutter opacity-85 max-sm:hidden"
     >Pats Bluff · Lamington NP · Sunset</span
   >
 </section>
@@ -163,7 +163,6 @@ import { links } from "../lib/links";
   .hero__location {
     top: 45%;
     writing-mode: vertical-rl;
-    letter-spacing: 0.16em;
   }
 
   /* Entrance: three distinct beats - club name, then headline, then pill - so
