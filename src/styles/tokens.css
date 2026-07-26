@@ -102,8 +102,11 @@
    * ease, matching the mockup's feel.
    */
   --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
-  /* Interaction: hover, press, focus. */
+  /* Interaction on a control: hover, press, focus. */
   --duration-base: 280ms;
+  /* Interaction on a large surface. A photograph zooming at control speed reads
+   * as a twitch; it needs room to move. */
+  --duration-slow: 600ms;
   /* First-paint arrival. Long enough to read as a rise rather than a flash. */
   --duration-entrance: 700ms;
 }
