@@ -38,10 +38,7 @@ const scale = [
   description="Design tokens, tone pairings and the type scale."
 >
   <header data-tone="ink" class="px-gutter py-section">
-    <p
-      class="text-eyebrow font-sans font-extrabold uppercase"
-      style="color: var(--tone-accent)"
-    >
+    <p class="eyebrow font-sans" style="color: var(--tone-accent)">
       Foundation
     </p>
     <h1 class="text-section font-serif mt-4">Styleguide</h1>
@@ -90,9 +87,7 @@ const scale = [
       {
         tones.map((t) => (
           <div data-tone={t.name} class="p-6">
-            <p class="text-eyebrow font-extrabold uppercase">
-              data-tone="{t.name}"
-            </p>
+            <p class="eyebrow">data-tone="{t.name}"</p>
             <p class="text-title font-serif mt-3">Foreground</p>
             <p class="text-body mt-2" style="color: var(--tone-accent)">
               Accent text
@@ -113,6 +108,11 @@ const scale = [
       Seven fluid steps, replacing the mockup's 92 <code>clamp()</code> calls of which
       80 were distinct. Each step carries its own leading and tracking, so one utility
       applies all three. Resize the window to see them interpolate.
+    </p>
+    <p class="text-body mt-3 max-w-[56ch]">
+      <code>eyebrow</code> is a composite utility: size, weight, tracking and case
+      as one class, because assembling them by hand had already produced two different
+      weights for the same label.
     </p>
     <div class="mt-12 space-y-12">
       {

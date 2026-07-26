@@ -1,0 +1,19 @@
+/* Composites: one design decision that happens to need several properties.
+ * Defined as Tailwind utilities so they stay a single class in markup and can
+ * still be overridden by later utilities in the normal way.
+ *
+ * The rule of thumb: if applying the properties separately could produce a
+ * *wrong but plausible* result, it belongs here. The eyebrow below is exactly
+ * that case - it was being assembled by hand as
+ * `text-eyebrow font-extrabold uppercase` and had already drifted to two
+ * different weights in the same component.
+ */
+
+/* The small tracked label above headings and inside pill controls. */
+@utility eyebrow {
+  font-size: var(--text-eyebrow);
+  line-height: var(--text-eyebrow--line-height);
+  letter-spacing: var(--text-eyebrow--letter-spacing);
+  font-weight: 800;
+  text-transform: uppercase;
+}
