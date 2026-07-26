@@ -3,7 +3,10 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    # `content` is included so the required `check` context lands on that SHA. A
+    # pull request opened with GITHUB_TOKEN does not trigger workflows, so without
+    # this the auto-merge would wait forever for a check that never runs.
+    branches: [main, content]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -30,6 +33,9 @@ jobs:
 
       # Raw values may only live in the token layer.
       - run: pnpm check:tokens
+
+      # The CMS config and the content schema must not drift apart.
+      - run: pnpm check:cms
 
       # Type-checks .astro templates as well as .ts. Requires TypeScript 6.x:
       # the 7.x native compiler does not expose the API this relies on.

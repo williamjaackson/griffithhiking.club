@@ -1,8 +1,13 @@
 ---
 import { Image, Picture } from "astro:assets";
-import heroPhoto from "../assets/hero-pats-bluff.jpg";
+import { getEntry } from "astro:content";
 import clubLogo from "../assets/club-logo.png";
 import { links } from "../lib/links";
+import Lines from "./Lines.astro";
+
+// The mark stays in src/assets: it is the club's identity, not editable content.
+const home = await getEntry("home", "index");
+const { eyebrow, headline, photo, photoAlt, focalPoint, caption } = home!.data;
 ---
 
 {
@@ -19,8 +24,9 @@ import { links } from "../lib/links";
   }
   <Picture
     class="hero__photo absolute inset-0 -z-20 h-full w-full object-cover"
-    src={heroPhoto}
-    alt=""
+    style={`object-position: ${focalPoint}`}
+    src={photo}
+    alt={photoAlt}
     formats={["avif", "webp"]}
     fallbackFormat="jpeg"
     widths={[640, 960, 1170]}
@@ -62,15 +68,15 @@ import { links } from "../lib/links";
   </nav>
 
   <div class="hero__title absolute z-10 right-gutter left-gutter">
-    <p class="eyebrow">Griffith Hiking Club · Gold Coast</p>
+    <p class="eyebrow">{eyebrow}</p>
     <h1 class="hero__headline text-hero font-display mt-7 uppercase">
-      Weekend<br />adventures.
+      <Lines text={headline} />
     </h1>
   </div>
 
   <span
     class="hero__location caption absolute z-10 right-gutter opacity-85 max-sm:hidden"
-    >Pats Bluff · Lamington NP · Sunset</span
+    >{caption}</span
   >
 </section>
 
@@ -82,10 +88,9 @@ import { links } from "../lib/links";
     max-height: 56rem;
   }
 
-  /* Keeps the group of hikers in frame as the crop narrows. */
-  .hero__photo {
-    object-position: 54% 48%;
-  }
+  /* object-position is set inline from the entry's focalPoint, because which
+     part of the photo to keep depends on the photo - so it belongs with the
+     content, not here. */
 
   /* Two layers, both derived from a token rather than literal colours:
      1. a vignette, pulling the corners down so the frame feels like a lens

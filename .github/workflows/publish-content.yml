@@ -1,0 +1,53 @@
+name: Publish content
+
+# The CMS commits to `content`, never to `main`. This turns those commits into a
+# pull request that merges itself once CI passes, so the editor never sees a PR
+# and `main` keeps requiring one.
+on:
+  push:
+    branches: [content]
+
+concurrency:
+  group: publish-content
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Open or reuse the pull request, then let it merge itself
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The sync job below pushes main onto content, which fires this workflow
+          # with nothing to publish. Bail out rather than opening an empty PR.
+          if [ "$(git rev-list --count origin/main..origin/content)" -eq 0 ]; then
+            echo "content holds nothing main does not; nothing to publish"
+            exit 0
+          fi
+
+          number=$(gh pr list --head content --base main --state open \
+            --json number --jq '.[0].number // empty')
+
+          if [ -z "$number" ]; then
+            gh pr create --head content --base main \
+              --title "Publish content edits" \
+              --body "Opened automatically from \`content\`, where the CMS commits. Merges itself once CI passes."
+            number=$(gh pr list --head content --base main --state open \
+              --json number --jq '.[0].number')
+          fi
+
+          echo "publishing via PR #$number"
+          # Auto-merge waits for the required `check` context. That check is
+          # reported by ci.yml running on the push to `content`, because a PR
+          # opened with GITHUB_TOKEN does not itself trigger workflows.
+          gh pr merge "$number" --squash --auto

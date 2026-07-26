@@ -1,27 +1,11 @@
 ---
 import { Picture } from "astro:assets";
-import sunsetFriends from "../assets/sunset-friends.jpg";
-import rainforestLight from "../assets/rainforest-light.jpg";
-import forestFriends from "../assets/forest-friends.jpg";
+import { getCollection } from "astro:content";
 import { links } from "../lib/links";
 
-const frames = [
-  {
-    src: sunsetFriends,
-    alt: "Friends together in warm sunset light",
-    caption: "01 / People",
-  },
-  {
-    src: rainforestLight,
-    alt: "Sunlight through the rainforest",
-    caption: "02 / Place",
-  },
-  {
-    src: forestFriends,
-    alt: "Hikers beneath tall trees",
-    caption: "03 / Weekend",
-  },
-];
+const frames = (await getCollection("moments")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
 ---
 
 <section class="py-section" data-tone="ink" aria-label="Club moments">
@@ -38,8 +22,8 @@ const frames = [
           >
             <Picture
               class="rail__photo"
-              src={f.src}
-              alt={f.alt}
+              src={f.data.photo}
+              alt={f.data.alt}
               formats={["avif", "webp"]}
               fallbackFormat="jpeg"
               widths={[480, 780, 1100]}
@@ -51,7 +35,7 @@ const frames = [
             <span class="sr-only">on Instagram</span>
           </a>
           <figcaption class="caption mt-3" style="color: var(--tone-accent)">
-            {f.caption}
+            {f.data.caption}
           </figcaption>
         </figure>
       ))

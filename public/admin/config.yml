@@ -1,0 +1,86 @@
+# Sveltia CMS. Field names here must match the Zod schema in
+# src/content.config.ts exactly - `pnpm check:cms` fails the build if they drift,
+# because this file is the one unavoidable duplication in a git-backed CMS.
+
+backend:
+  name: github
+  repo: williamjaackson/griffithhiking.club
+  # Never main. main requires a pull request and a passing check, which the CMS
+  # cannot satisfy on its own. Edits land here and a workflow opens the PR.
+  branch: content
+  squash_merges: true
+
+# Where uploads go when a collection does not override it. Inside src/ so Astro's
+# image pipeline still processes them - anything in public/ would bypass it and
+# ship a full-size phone photo.
+media_folder: src/content/uploads
+public_folder: src/content/uploads
+
+collections:
+  - name: home
+    label: Home page
+    description: The hero and the line beneath it.
+    files:
+      - name: index
+        label: Home page
+        file: src/content/home/index.yaml
+        # Empty strings store uploads beside the entry, which is the shape
+        # Astro's image() helper resolves.
+        media_folder: ""
+        public_folder: ""
+        fields:
+          - name: eyebrow
+            label: Small label above the headline
+            widget: string
+          - name: headline
+            label: Headline
+            widget: text
+            hint: One line per line. Where you break it is where it breaks.
+          - name: photo
+            label: Background photograph
+            widget: image
+          - name: photoAlt
+            label: Photo description
+            widget: string
+            required: false
+            hint: Leave empty - the photo is a backdrop, and the headline carries the meaning.
+          - name: focalPoint
+            label: Focal point
+            widget: string
+            hint: Which part of the photo to keep when it is cropped, e.g. 50% 54%.
+          - name: caption
+            label: Photo caption
+            widget: string
+            hint: Names the place in the photo, so change it when you change the photo.
+          - name: statement
+            label: The line
+            widget: text
+            hint: One line per line.
+
+  - name: moments
+    label: Photo rail
+    description: The three photographs below the hero.
+    folder: src/content/moments
+    extension: yaml
+    format: yaml
+    create: true
+    delete: true
+    media_folder: ""
+    public_folder: ""
+    sortable_fields: [order]
+    summary: "{{order}} · {{caption}}"
+    fields:
+      - name: order
+        label: Position
+        widget: number
+        value_type: int
+      - name: photo
+        label: Photograph
+        widget: image
+      - name: alt
+        label: Description
+        widget: string
+        hint: Describes the photo for anyone who cannot see it. Required.
+      - name: caption
+        label: Caption
+        widget: string

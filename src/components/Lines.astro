@@ -1,0 +1,23 @@
+---
+/** Renders a multi-line content string, turning each newline into a <br />.
+ *
+ *  Display type needs deliberate line breaks - the hero and the statement both
+ *  read wrong when the browser chooses. But an editor should never type markup,
+ *  so the content holds real newlines and this turns them into breaks.
+ */
+interface Props {
+  text: string;
+}
+
+const { text } = Astro.props;
+const lines = text.split("\n");
+---
+
+{
+  lines.map((line, i) => (
+    <Fragment>
+      {i > 0 && <br />}
+      {line}
+    </Fragment>
+  ))
+}

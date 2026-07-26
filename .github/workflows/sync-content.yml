@@ -1,0 +1,42 @@
+name: Sync content branch
+
+# `content` must exist for the CMS to commit to, and must not fall behind main or
+# an editor would be working against stale files. Because the repo deletes merged
+# branches, this both recreates it after a publish and keeps it level afterwards.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: sync-content
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Point content at main
+        run: |
+          if git rev-parse --verify origin/content >/dev/null 2>&1; then
+            ahead=$(git rev-list --count origin/main..origin/content)
+            if [ "$ahead" -gt 0 ]; then
+              # Someone is mid-edit. Overwriting would throw their work away.
+              echo "content has $ahead unpublished commit(s); leaving it alone"
+              exit 0
+            fi
+          else
+            echo "content does not exist; creating it"
+          fi
+
+          # Force is safe here: we only reach this line when content holds nothing
+          # main does not. Pushing an identical SHA is a no-op and fires nothing.
+          git push origin "HEAD:refs/heads/content" --force
+          echo "content now matches main"
