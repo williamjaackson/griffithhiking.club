@@ -2,6 +2,7 @@
 import { Picture } from "astro:assets";
 import { getCollection, getEntry } from "astro:content";
 import { links } from "../lib/links";
+import Difficulty from "./Difficulty.astro";
 import {
   clubToday,
   formatBadge,
@@ -81,15 +82,43 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
             <p class="caption mt-3 opacity-90">
               {next.place} · {next.detail}
             </p>
-            <a
-              class="events__cta rounded-pill px-control-inline py-control-block gap-control-gap eyebrow bg-cream text-olive-dark mt-8 inline-flex w-fit items-center"
-              href={links.campusGroups}
-              target="_blank"
-              rel="noreferrer"
-              data-join
-            >
-              Join this hike
-            </a>
+
+            <p class="events__meta mt-4">
+              {next.difficulty && <Difficulty level={next.difficulty} />}
+              {next.kind === "trip" && (
+                <span class="events__tag">Overnight</span>
+              )}
+              {next.kind === "social" && (
+                <span class="events__tag">Social</span>
+              )}
+              {next.applyUrl && (
+                <span class="events__tag is-apply">Application only</span>
+              )}
+            </p>
+
+            {/* An application-only outing has one action, and it is the form.
+                Everything else opens the join dialog, which is the club's
+                standing call to action. */}
+            {next.applyUrl ? (
+              <a
+                class="events__cta rounded-pill px-control-inline py-control-block gap-control-gap eyebrow bg-cream text-olive-dark mt-7 inline-flex w-fit items-center"
+                href={next.applyUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Apply for this hike
+              </a>
+            ) : (
+              <a
+                class="events__cta rounded-pill px-control-inline py-control-block gap-control-gap eyebrow bg-cream text-olive-dark mt-7 inline-flex w-fit items-center"
+                href={links.campusGroups}
+                target="_blank"
+                rel="noreferrer"
+                data-join
+              >
+                {next.kind === "social" ? "Join the club" : "Join this hike"}
+              </a>
+            )}
           </article>
 
           {/* An ordered list because the order is the meaning: these are the
@@ -98,7 +127,10 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
             {queue.map((event) => {
               const badge = formatBadge(event);
               return (
-                <li class="events__row grid items-center gap-5">
+                <li
+                  class="events__row grid items-center gap-5"
+                  data-kind={event.kind}
+                >
                   <time class="caption events__date" datetime={event.start}>
                     <span aria-hidden="true">
                       {badge.day} {badge.month}
@@ -111,6 +143,32 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                     </span>
                     <span class="caption mt-2 block opacity-70">
                       {event.place}
+                    </span>
+                    {/* The designated spot for everything that qualifies the
+                        outing: how hard it is, what sort of thing it is, and
+                        whether you have to apply. Wraps on a narrow row, and
+                        pushes the apply link to the far edge on a wide one. */}
+                    <span class="events__meta mt-3">
+                      {event.difficulty && (
+                        <Difficulty level={event.difficulty} />
+                      )}
+                      {event.kind === "trip" && (
+                        <span class="events__tag">Overnight</span>
+                      )}
+                      {event.kind === "social" && (
+                        <span class="events__tag">Social</span>
+                      )}
+                      {event.applyUrl && (
+                        <a
+                          class="events__apply rounded-pill caption"
+                          href={event.applyUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Apply
+                          <span class="sr-only"> for {event.title}</span>
+                        </a>
+                      )}
                     </span>
                   </span>
                 </li>
@@ -245,6 +303,61 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
     font-size: var(--text-title);
     line-height: 1;
     letter-spacing: var(--text-title--letter-spacing);
+  }
+
+  /* Everything qualifying the outing sits on one line that wraps rather than
+     overflows, so a narrow row stacks instead of squeezing the title. */
+  .events__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.9rem;
+  }
+
+  /* Says what sort of outing it is, for the ones that are not simply a hike.
+     Outlined rather than filled: it qualifies the entry, it does not compete
+     with the title. */
+  .events__tag {
+    font-size: var(--text-eyebrow);
+    letter-spacing: 0.14em;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+  }
+
+  /* Application-only is a condition of entry, not a category, so it is the one
+     tag that is filled in. */
+  .events__tag.is-apply {
+    border-color: transparent;
+    background: var(--tone-accent);
+    color: var(--color-olive-dark);
+  }
+
+  /* Pushed to the far edge when the row is wide enough, wrapping under with
+     everything else when it is not. */
+  .events__apply {
+    margin-inline-start: auto;
+    padding: 0.45rem 0.9rem;
+    background: var(--tone-fg);
+    color: var(--tone-bg);
+    white-space: nowrap;
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      opacity var(--duration-base) ease;
+  }
+
+  .events__apply:hover {
+    transform: translateY(-1px);
+    opacity: 0.88;
+  }
+
+  /* A social night is not a hike: its date loses the accent colour that marks
+     the hiking entries, so the list can be scanned for hikes alone. */
+  .events__row[data-kind="social"] .events__date {
+    color: color-mix(in srgb, currentColor 55%, transparent);
   }
 
   .events__link {

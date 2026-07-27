@@ -62,6 +62,35 @@ export const clubToday = (now: Date): string => {
   return `${part("year")}-${part("month")}-${part("day")}`;
 };
 
+/** What an outing is. A social night and an overnight trip are not hikes, and
+ *  the list has to say so rather than presenting them as one. */
+export const KINDS = ["hike", "trip", "social"] as const;
+export type Kind = (typeof KINDS)[number];
+
+/** The grades, easiest first. Order is meaning here: the index drives how many
+ *  peaks the ridge fills, so this array is the scale, not just a list. */
+export const DIFFICULTIES = [
+  "easy",
+  "easy-moderate",
+  "moderate",
+  "moderate-hard",
+  "hard",
+] as const;
+export type Difficulty = (typeof DIFFICULTIES)[number];
+
+/** En dashes, matching the date ranges, because these are spans too. */
+export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  easy: "Easy",
+  "easy-moderate": "Easy – Moderate",
+  moderate: "Moderate",
+  "moderate-hard": "Moderate – Hard",
+  hard: "Hard",
+};
+
+/** Where a grade sits on the scale, counting from 1. */
+export const difficultyRank = (difficulty: Difficulty): number =>
+  DIFFICULTIES.indexOf(difficulty) + 1;
+
 /** The dates an event occupies. `end` is only set for multi-day trips. */
 export interface EventDates {
   start: string;

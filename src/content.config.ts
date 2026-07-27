@@ -1,6 +1,6 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
-import { isRealDate } from "./lib/events";
+import { DIFFICULTIES, KINDS, isRealDate } from "./lib/events";
 
 /** Photos live beside their entry rather than in src/assets, because that is
  *  where an entry-relative CMS upload lands. `image()` resolves the bare
@@ -82,10 +82,24 @@ const events = defineCollection({
       place: z.string().min(1, "every event needs a place"),
       /** The one-line character of the outing: "Sunset hike", "Full day". */
       detail: z.string(),
+      /** Drives how the entry is presented. A social night is not a hike and
+       *  must not be listed as though it were. */
+      kind: z.enum(KINDS),
+      /** Left unset when it does not apply. Grading is safety information, so
+       *  it is never guessed on an editor's behalf. */
+      difficulty: z.enum(DIFFICULTIES).optional(),
+      /** Present when places are by application rather than turning up. The
+       *  presence of the link is what makes an outing application-only, so the
+       *  two can never disagree. */
+      applyUrl: z.string().url().optional(),
     })
     .refine((event) => !event.end || event.end >= event.start, {
       message: "the end date cannot be before the start date",
       path: ["end"],
+    })
+    .refine((event) => !(event.kind === "social" && event.difficulty), {
+      message: "a social event has no difficulty grade",
+      path: ["difficulty"],
     }),
 });
 

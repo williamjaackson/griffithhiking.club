@@ -133,6 +133,32 @@ collections:
         widget: string
         hint: The park or suburb, e.g. Lamington National Park.
       - name: detail
-        label: Kind of outing
+        label: Description
         widget: string
         hint: One short line, e.g. Sunset hike, Full day, Club social.
+      - name: kind
+        label: Type
+        widget: select
+        default: hike
+        options:
+          - { label: Hike, value: hike }
+          - { label: Overnight trip, value: trip }
+          - { label: Social event, value: social }
+      - name: difficulty
+        label: Difficulty
+        widget: select
+        required: false
+        options:
+          - { label: Easy, value: easy }
+          - { label: Easy – Moderate, value: easy-moderate }
+          - { label: Moderate, value: moderate }
+          - { label: Moderate – Hard, value: moderate-hard }
+          - { label: Hard, value: hard }
+        hint: Leave empty for a social event. Never guess - this is safety information.
+      - name: applyUrl
+        label: Application form link
+        widget: string
+        required: false
+        hint: >-
+          Only for hikes where places are by application. Adding a link here is
+          what marks the hike application-only.

@@ -8,7 +8,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  DIFFICULTIES,
+  DIFFICULTY_LABELS,
   clubToday,
+  difficultyRank,
   formatBadge,
   formatDateRange,
   getUpcoming,
@@ -153,6 +156,25 @@ test("formatDateRange spells the date out for screen readers", () => {
     formatDateRange({ start: "2026-10-23", end: "2026-10-25" }),
     "Friday 23 October 2026 to Sunday 25 October 2026",
   );
+});
+
+test("the difficulty scale runs easiest to hardest, counting from one", () => {
+  // The rank drives how many peaks the ridge fills, so the order of the array
+  // is load-bearing rather than cosmetic.
+  assert.deepEqual([...DIFFICULTIES].map(difficultyRank), [1, 2, 3, 4, 5]);
+  assert.equal(difficultyRank("easy"), 1);
+  assert.equal(difficultyRank("hard"), DIFFICULTIES.length);
+});
+
+test("every grade has a label", () => {
+  // Guards the pairing: adding a grade without a label would render an empty
+  // string beside the ridge rather than failing.
+  for (const grade of DIFFICULTIES) {
+    assert.ok(
+      DIFFICULTY_LABELS[grade]?.length > 0,
+      `${grade} has no readable label`,
+    );
+  }
 });
 
 test("isRealDate rejects anything that is not a real calendar date", () => {

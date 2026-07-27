@@ -1,0 +1,90 @@
+---
+import {
+  DIFFICULTIES,
+  DIFFICULTY_LABELS,
+  difficultyRank,
+  type Difficulty,
+} from "../lib/events";
+
+/** How hard a hike is, drawn as a ridgeline.
+ *
+ *  Five peaks rising left to right, filled up to the grade. A row of identical
+ *  dots or bars would say the same thing in the vocabulary of a wifi meter;
+ *  this says it in the vocabulary of the thing being described, and reads as
+ *  terrain before it reads as a scale.
+ *
+ *  The five grades map one-to-one onto five peaks, so the scale needs no
+ *  rounding and no half states.
+ */
+interface Props {
+  level: Difficulty;
+}
+
+const { level } = Astro.props;
+const filled = difficultyRank(level);
+
+// Peaks sit on a shared baseline, each one taller than the last. Laid out in
+// the viewBox's own units so the shape scales with the font rather than being
+// pinned to pixels.
+const BASE = 16;
+const peaks = DIFFICULTIES.map((_, i) => ({
+  points: `${i * 9},${BASE} ${i * 9 + 4},${BASE - (5 + i * 2.5)} ${i * 9 + 8},${BASE}`,
+  on: i < filled,
+}));
+---
+
+<span class="grade" data-level={level}>
+  <svg
+    class="grade__ridge"
+    viewBox="0 0 44 16"
+    aria-hidden="true"
+    focusable="false"
+  >
+    {
+      peaks.map((peak) => (
+        <polygon
+          class:list={["grade__peak", peak.on && "is-on"]}
+          points={peak.points}
+        />
+      ))
+    }
+  </svg>
+  <span class="grade__label caption">{DIFFICULTY_LABELS[level]}</span>
+</span>
+
+<style>
+  .grade {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Sized in em so the ridge tracks the label beside it. */
+  .grade__ridge {
+    width: 2.9em;
+    height: 1.05em;
+    overflow: visible;
+    flex: none;
+  }
+
+  /* Unclimbed peaks stay in the same ink at low strength rather than becoming
+     outlines: a 1px stroke at this size reads as noise, and the silhouette of
+     the whole ridge is the point. */
+  .grade__peak {
+    fill: currentColor;
+    opacity: 0.22;
+  }
+
+  .grade__peak.is-on {
+    opacity: 1;
+  }
+
+  /* The hardest grade is the one worth noticing before you read the word. */
+  .grade[data-level="hard"] .grade__peak.is-on {
+    fill: var(--tone-accent);
+  }
+
+  .grade__label {
+    white-space: nowrap;
+  }
+</style>
