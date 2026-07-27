@@ -24,7 +24,7 @@ const { next, queue } = splitUpcoming(
 const nextBadge = next ? formatBadge(next) : null;
 
 const home = await getEntry("home", "index");
-const { eventsPhoto, eventsPhotoAlt } = home!.data;
+const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
 ---
 
 <section class="px-gutter py-section" data-tone="paper" id="upcoming">
@@ -50,11 +50,12 @@ const { eventsPhoto, eventsPhotoAlt } = home!.data;
                 wide screen and fetch an image no larger than 900w can fill. */}
             <Picture
               class="absolute inset-0 -z-20 h-full w-full object-cover"
+              style={`object-position: ${eventsFocalPoint}`}
               src={eventsPhoto}
               alt={eventsPhotoAlt}
               formats={["avif", "webp"]}
               fallbackFormat="jpeg"
-              widths={[420, 640, 900]}
+              widths={[320, 480, 640]}
               sizes="(width >= 60rem) 24rem, 92vw"
               quality={72}
               loading="lazy"
@@ -175,18 +176,21 @@ const { eventsPhoto, eventsPhotoAlt } = home!.data;
     );
   }
 
-  /* Pinned to the top corner, matching the padding of the card it sits in, so
-     it reads as a label on the frame rather than part of the stack below. */
+  /* Centred, not tucked into the corner. The arch cuts the top corners away
+     entirely - at the sides the curve drops by 22% of the card's height - so a
+     corner label sits outside the shape and `overflow: hidden` clips it. The
+     apex of the arch is at the horizontal centre, where the card is at full
+     height, which is the only part of the top edge with room for text. */
   .events__label {
     top: 2rem;
-    left: 2rem;
+    inset-inline: 0;
+    text-align: center;
     opacity: 0.85;
   }
 
   @media (width >= 40rem) {
     .events__label {
       top: 2.5rem;
-      left: 2.5rem;
     }
   }
 

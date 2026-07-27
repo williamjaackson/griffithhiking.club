@@ -31,6 +31,14 @@ const home = defineCollection({
       eventsPhotoAlt: z
         .string()
         .min(1, "the events photo shows people, so it needs a description"),
+      /** As with the hero: the card crops a tall photo, and which part to keep
+       *  depends on the photo, so it travels with the photo rather than being
+       *  fixed in the component. Defaults to the mockup's crop, which holds
+       *  the faces above the text. */
+      eventsFocalPoint: z
+        .string()
+        .regex(/^[\d.%a-z\s]+$/i, "must be a CSS object-position value")
+        .default("50% 38%"),
       /** Names the place in the photo, so it has to change when the photo does. */
       caption: z.string(),
       statement: z.string(),

@@ -60,6 +60,10 @@ collections:
             label: Upcoming hikes photo description
             widget: string
             hint: Describes the photo for anyone who cannot see it. Required.
+          - name: eventsFocalPoint
+            label: Upcoming hikes focal point
+            widget: string
+            hint: Which part of the photo to keep when it is cropped, e.g. 50% 38%.
           - name: statement
             label: The line
             widget: text
