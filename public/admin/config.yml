@@ -64,18 +64,6 @@ collections:
             label: Upcoming hikes focal point
             widget: string
             hint: Which part of the photo to keep when it is cropped, e.g. 50% 38%.
-          - name: footerPhoto
-            label: Closing photograph
-            widget: image
-            hint: The photo beside "Come with us" at the bottom of the page.
-          - name: footerPhotoAlt
-            label: Closing photo description
-            widget: string
-            hint: Describes the photo for anyone who cannot see it. Required.
-          - name: footerFocalPoint
-            label: Closing photo focal point
-            widget: string
-            hint: Which part of the photo to keep when it is cropped, e.g. 50% 67%.
           - name: statement
             label: The line
             widget: text

@@ -41,15 +41,6 @@ const home = defineCollection({
         .default("50% 38%"),
       /** Names the place in the photo, so it has to change when the photo does. */
       caption: z.string(),
-      /** The photograph beside the closing invitation. */
-      footerPhoto: image(),
-      footerPhotoAlt: z
-        .string()
-        .min(1, "the footer photo shows people, so it needs a description"),
-      footerFocalPoint: z
-        .string()
-        .regex(/^[\d.%a-z\s]+$/i, "must be a CSS object-position value")
-        .default("50% 67%"),
       statement: z.string(),
     }),
 });

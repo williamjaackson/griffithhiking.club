@@ -1,111 +1,76 @@
 ---
-import { Picture } from "astro:assets";
-import { getEntry } from "astro:content";
 import { links } from "../lib/links";
 
-/** The closing invitation.
+/** The colophon.
  *
- *  The page has spent its length showing what the club does; this asks. So it
- *  carries one message and one action, at the largest type on the page after
- *  the hero, and nothing else competes with them.
+ *  Everything a visitor might want has already been offered above, so this is
+ *  the legal line and the credits and nothing else - no second navigation, no
+ *  repeated social links.
+ *
+ *  The year comes from the build. The site rebuilds nightly to roll the hike
+ *  dates over, so it cannot be left behind on 1 January.
  */
-const home = await getEntry("home", "index");
-const { footerPhoto, footerPhotoAlt, footerFocalPoint } = home!.data;
+const year = new Date().getFullYear();
 ---
 
-<footer class="footer" data-tone="olive">
-  <Picture
-    class="footer__photo photo-muted"
-    style={`object-position: ${footerFocalPoint}`}
-    src={footerPhoto}
-    alt={footerPhotoAlt}
-    formats={["avif", "webp"]}
-    fallbackFormat="jpeg"
-    widths={[640, 960, 1280]}
-    sizes="(width >= 52rem) 55vw, 100vw"
-    quality={70}
-    loading="lazy"
-  />
-
-  <div class="footer__panel px-gutter">
-    <p class="eyebrow" style="color: var(--tone-accent)">
-      First hike or fiftieth
+<footer class="footer px-gutter" data-tone="ink">
+  <div class="footer__inner mx-auto max-w-5xl">
+    <p class="caption">© {year} Griffith Hiking Club. By students.</p>
+    <p class="footer__credits caption">
+      <a
+        class="footer__link"
+        href={links.builtBy}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Built and operated by William Jackson
+      </a>
+      <a
+        class="footer__link"
+        href={links.university}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Griffith University
+      </a>
     </p>
-    <h2 class="footer__title font-display mt-7 uppercase">
-      Come<br />with us.
-    </h2>
-    <a
-      class="footer__cta rounded-pill px-control-inline py-control-block gap-control-gap eyebrow bg-cream text-olive-dark mt-10 inline-flex w-fit items-center"
-      href={links.campusGroups}
-      target="_blank"
-      rel="noreferrer"
-      data-join
-    >
-      Become a member
-    </a>
   </div>
 </footer>
 
 <style>
-  /* Olive behind the photo as well as beside it, so the seam between the two
-     halves never shows while the image is still loading. */
   .footer {
-    display: grid;
-    background: var(--tone-bg);
+    padding-block: 2.25rem;
   }
 
-  .footer__photo {
-    width: 100%;
-    height: min(70vh, 26rem);
-    object-fit: cover;
-  }
-
-  .footer__panel {
-    padding-block: var(--spacing-section);
+  .footer__inner,
+  .footer__credits {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
   }
 
-  /* The tightest leading on the page. Caps have no descenders, so the two lines
-     can close right up, which is what makes the phrase read as one block rather
-     than two lines of a heading. */
-  .footer__title {
-    font-size: var(--text-section);
-    line-height: 0.78;
-  }
-
-  .footer__cta {
-    box-shadow: 0 0.9rem 2.2rem
-      color-mix(in srgb, var(--color-ink) 26%, transparent);
-    transition:
-      transform var(--duration-base) var(--ease-soft),
-      box-shadow var(--duration-base) ease,
-      background-color var(--duration-base) ease;
-  }
-
-  .footer__cta:hover {
-    transform: translateY(-2px);
-    background-color: var(--color-white);
-    box-shadow: 0 1.3rem 2.9rem
-      color-mix(in srgb, var(--color-ink) 34%, transparent);
-  }
-
-  .footer__cta:active {
-    transform: translateY(0) scale(0.985);
-  }
-
-  /* Side by side once there is room, with the photograph taking the larger
-     share - it is the last thing the page shows of the club itself. */
-  @media (width >= 52rem) {
-    .footer {
-      grid-template-columns: 1.15fr 1fr;
-      align-items: stretch;
+  /* Credits sit opposite the copyright once the row has room for both. */
+  @media (width >= 40rem) {
+    .footer__inner {
+      justify-content: space-between;
     }
+  }
 
-    .footer__photo {
-      height: 100%;
-      min-height: 34rem;
-    }
+  /* Quiet by default - this is the last thing on the page, not a destination -
+     but it still has to clear contrast, so it dims rather than disappears. */
+  .footer,
+  .footer__link {
+    color: color-mix(in srgb, var(--tone-fg) 62%, transparent);
+  }
+
+  .footer__link {
+    text-decoration: none;
+    transition: color var(--duration-base) ease;
+  }
+
+  .footer__link:hover,
+  .footer__link:focus-visible {
+    color: var(--tone-fg);
   }
 </style>

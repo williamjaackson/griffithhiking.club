@@ -4,6 +4,9 @@ export const links = {
   campusGroups: "https://griffith.campusgroups.com/Hikingclub/club_signup",
   whatsapp: "https://chat.whatsapp.com/C9wxhtt5bvh4P89fVc2Yzl?mode=gi_t",
   instagramHandle: "@griffithhikingclub",
+  /** Credited in the footer, as on the ICT club's site. */
+  builtBy: "https://jaackson.com/",
+  university: "https://www.griffith.edu.au",
   instagram: "https://www.instagram.com/griffithhikingclub/",
 } as const;
 
