@@ -3,7 +3,6 @@ import { Picture } from "astro:assets";
 import { getCollection, getEntry } from "astro:content";
 import { links } from "../lib/links";
 import Difficulty from "./Difficulty.astro";
-import KindMark from "./KindMark.astro";
 import {
   clubToday,
   formatBadge,
@@ -84,13 +83,9 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
               {next.place} · {next.detail}
             </p>
 
-            {(next.difficulty || next.applyUrl || next.kind !== "hike") && (
+            {next.difficulty && (
               <p class="events__meta mt-4">
-                {next.difficulty && <Difficulty level={next.difficulty} />}
-                {next.kind !== "hike" && <KindMark kind={next.kind} />}
-                {next.applyUrl && (
-                  <span class="events__flag">Application only</span>
-                )}
+                <Difficulty level={next.difficulty} />
               </p>
             )}
 
@@ -116,6 +111,13 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
               >
                 {next.kind === "social" ? "Join the club" : "Join this hike"}
               </a>
+            )}
+
+            {/* Sits under the button rather than beside the grade, because it
+                qualifies the action: it is the answer to "what happens when I
+                press this", not another property of the hike. */}
+            {next.applyUrl && (
+              <p class="events__note caption mt-4">Applications only</p>
             )}
           </article>
 
@@ -153,23 +155,18 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                         )}
                         {event.applyUrl && (
                           <a
-                            class="events__apply rounded-pill caption"
+                            class="events__note caption"
                             href={event.applyUrl}
                             target="_blank"
                             rel="noreferrer"
                           >
-                            Apply
+                            Applications only
                             <span class="sr-only"> for {event.title}</span>
                           </a>
                         )}
                       </span>
                     )}
                   </span>
-                  {event.kind !== "hike" && (
-                    <span class="events__kind">
-                      <KindMark kind={event.kind} />
-                    </span>
-                  )}
                 </li>
               );
             })}
@@ -228,8 +225,10 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
   .events__scrim {
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-black) 4%, transparent),
-      color-mix(in srgb, var(--color-black) 78%, transparent)
+      color-mix(in srgb, var(--color-black) 62%, transparent) 0%,
+      color-mix(in srgb, var(--color-black) 55%, transparent) 10%,
+      color-mix(in srgb, var(--color-black) 6%, transparent) 28%,
+      color-mix(in srgb, var(--color-black) 78%, transparent) 100%
     );
   }
 
@@ -285,7 +284,6 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
   }
 
   .events__row {
-    position: relative;
     grid-template-columns: 6rem minmax(0, 1fr);
     min-height: 7rem;
     padding-block: 1.25rem;
@@ -314,65 +312,30 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
     gap: 0.5rem 0.9rem;
   }
 
-  /* Application-only is a condition of entry rather than a label, so it is
-     filled in: you cannot simply turn up to this one, and that has to be read
-     before the button below it is. */
-  .events__flag {
-    font-size: var(--text-eyebrow);
-    letter-spacing: 0.14em;
-    font-weight: 800;
-    text-transform: uppercase;
-    padding: 0.3rem 0.65rem;
-    border-radius: var(--radius-pill);
-    background: var(--tone-accent);
-    color: var(--color-olive-dark);
-    white-space: nowrap;
-  }
-
-  /* Pushed to the far edge when the row is wide enough, wrapping under with
-     everything else when it is not. */
-  .events__apply {
-    margin-inline-start: auto;
-    padding: 0.45rem 0.9rem;
-    background: var(--tone-fg);
-    color: var(--tone-bg);
-    white-space: nowrap;
-    transition:
-      transform var(--duration-base) var(--ease-soft),
-      opacity var(--duration-base) ease;
-  }
-
-  .events__apply:hover {
-    transform: translateY(-1px);
-    opacity: 0.88;
-  }
-
   /* A social night is not a hike: its date loses the accent colour that marks
      the hiking entries, so the list can be scanned for hikes alone. */
   .events__row[data-kind="social"] .events__date {
     color: color-mix(in srgb, currentColor 55%, transparent);
   }
 
-  /* Pinned to the row's right edge and centred on its full height. Absolute
-     rather than a third grid column, because a column would hold its gap open
-     on every hike row that has no mark. The wrapper exists so scoped styles
-     can reach it at all - they do not cross into a child component.
-
-     Sized by font-size because the mark is drawn in em, and muted from the
-     row's own colour so it reads as a marker rather than a second headline. */
-  .events__kind {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    translate: 0 -50%;
-    display: inline-flex;
-    font-size: 1.9rem;
-    color: color-mix(in srgb, currentColor 26%, transparent);
+  /* Quiet: it qualifies the outing rather than competing with its name. On the
+     card the button above already links to the form, so there it is plain text;
+     in a row it has to be the link itself, because the row has no button. */
+  .events__note {
+    opacity: 0.72;
   }
 
-  /* Only the rows that carry a mark reserve space for it. */
-  .events__row:not([data-kind="hike"]) {
-    padding-inline-end: 3.25rem;
+  a.events__note {
+    margin-inline-start: auto;
+    opacity: 0.85;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    text-decoration-thickness: 1px;
+    transition: opacity var(--duration-base) ease;
+  }
+
+  a.events__note:hover {
+    opacity: 1;
   }
 
   .events__link {
