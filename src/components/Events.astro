@@ -99,7 +99,7 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                 target="_blank"
                 rel="noreferrer"
               >
-                Apply for this hike
+                Apply
               </a>
             ) : (
               <a
@@ -154,15 +154,20 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                           <Difficulty level={event.difficulty} />
                         )}
                         {event.applyUrl && (
-                          <a
-                            class="events__note caption"
-                            href={event.applyUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Applications only
-                            <span class="sr-only"> for {event.title}</span>
-                          </a>
+                          <span class="events__apply-group">
+                            <span class="events__note caption">
+                              Applications only
+                            </span>
+                            <a
+                              class="events__apply rounded-pill caption"
+                              href={event.applyUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Apply
+                              <span class="sr-only"> for {event.title}</span>
+                            </a>
+                          </span>
                         )}
                       </span>
                     )}
@@ -325,17 +330,28 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
     opacity: 0.72;
   }
 
-  a.events__note {
+  /* The words and the button travel together, pushed to the row's far edge
+     when there is room and wrapping under the grade when there is not. */
+  .events__apply-group {
     margin-inline-start: auto;
-    opacity: 0.85;
-    text-decoration: underline;
-    text-underline-offset: 0.25em;
-    text-decoration-thickness: 1px;
-    transition: opacity var(--duration-base) ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
   }
 
-  a.events__note:hover {
-    opacity: 1;
+  .events__apply {
+    padding: 0.45rem 0.9rem;
+    background: var(--tone-fg);
+    color: var(--tone-bg);
+    white-space: nowrap;
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      opacity var(--duration-base) ease;
+  }
+
+  .events__apply:hover {
+    transform: translateY(-1px);
+    opacity: 0.88;
   }
 
   .events__link {
