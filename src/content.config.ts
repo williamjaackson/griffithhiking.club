@@ -41,20 +41,38 @@ const home = defineCollection({
         .default("50% 38%"),
       /** Names the place in the photo, so it has to change when the photo does. */
       caption: z.string(),
+      /** The photograph in the closing band. Editable: which photo closes the
+       *  page is a judgement about the club, not about the layout. */
+      invitationPhoto: image(),
+      invitationPhotoAlt: z
+        .string()
+        .min(1, "the closing photo shows people, so it needs a description"),
+      invitationFocalPoint: z
+        .string()
+        .regex(/^[\d.%a-z\s]+$/i, "must be a CSS object-position value")
+        .default("50% 67%"),
       statement: z.string(),
     }),
 });
 
-const moments = defineCollection({
-  loader: glob({ pattern: "*.yaml", base: "./src/content/moments" }),
-  schema: ({ image }) =>
-    z.object({
-      order: z.number().int(),
-      photo: image(),
-      alt: z.string().min(1, "every photo needs a description"),
-      caption: z.string(),
-    }),
-});
+/** Both galleries hold the same thing - an ordered set of club photographs with
+ *  a description and a caption - so the shape is declared once and pointed at
+ *  two folders. They stay separate collections because they are separate
+ *  sections: an editor should never have to tag a photo with where it belongs. */
+const gallery = (base: string) =>
+  defineCollection({
+    loader: glob({ pattern: "*.yaml", base }),
+    schema: ({ image }) =>
+      z.object({
+        order: z.number().int(),
+        photo: image(),
+        alt: z.string().min(1, "every photo needs a description"),
+        caption: z.string(),
+      }),
+  });
+
+const moments = gallery("./src/content/moments");
+const instagram = gallery("./src/content/instagram");
 
 /** A calendar date, always `YYYY-MM-DD`.
  *
@@ -103,4 +121,4 @@ const events = defineCollection({
     }),
 });
 
-export const collections = { home, moments, events };
+export const collections = { home, moments, instagram, events };

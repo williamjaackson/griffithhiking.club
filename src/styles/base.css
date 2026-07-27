@@ -51,6 +51,12 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    /* What shows when a scroll rubber-bands past either end. The root's colour
+     * is what the browser paints outside the page, and body's cream there read
+     * as a pale band above a dark hero. Olive is the tone at both ends - the
+     * hero above, the footer below - so overscrolling looks like part of the
+     * page rather than the edge of it. */
+    background-color: var(--color-olive);
   }
 
   body {
@@ -100,12 +106,16 @@
     font-weight: 800;
     letter-spacing: var(--text-eyebrow--letter-spacing);
     text-transform: uppercase;
-    /* Appears instantly on focus. No transition, so this needs no motion
+    /* Clipped where it sits rather than parked above the page. Moving it off the
+     * top edge leaves it in the strip that overscroll exposes, so rubber-banding
+     * up past the hero showed a green tab hanging above the site.
+     *
+     * Appears instantly on focus. No transition, so this needs no motion
      * tokens - and a skip link should not make a keyboard user wait. */
-    transform: translateY(-100%);
+    clip-path: inset(50%);
   }
   .skip-link:focus-visible {
-    transform: translateY(0);
+    clip-path: none;
   }
 }
 

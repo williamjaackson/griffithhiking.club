@@ -64,6 +64,18 @@ collections:
             label: Upcoming hikes focal point
             widget: string
             hint: Which part of the photo to keep when it is cropped, e.g. 50% 38%.
+          - name: invitationPhoto
+            label: Closing photograph
+            widget: image
+            hint: The photo beside "Come with us" at the bottom of the page.
+          - name: invitationPhotoAlt
+            label: Closing photo description
+            widget: string
+            hint: Describes the photo for anyone who cannot see it. Required.
+          - name: invitationFocalPoint
+            label: Closing photo focal point
+            widget: string
+            hint: Which part of the photo to keep when it is cropped, e.g. 50% 67%.
           - name: statement
             label: The line
             widget: text
@@ -73,6 +85,34 @@ collections:
     label: Photo rail
     description: The three photographs below the hero.
     folder: src/content/moments
+    extension: yaml
+    format: yaml
+    create: true
+    delete: true
+    media_folder: ""
+    public_folder: ""
+    sortable_fields: [order]
+    summary: "{{order}} · {{caption}}"
+    fields:
+      - name: order
+        label: Position
+        widget: number
+        value_type: int
+      - name: photo
+        label: Photograph
+        widget: image
+      - name: alt
+        label: Description
+        widget: string
+        hint: Describes the photo for anyone who cannot see it. Required.
+      - name: caption
+        label: Caption
+        widget: string
+
+  - name: instagram
+    label: Instagram gallery
+    description: The three photographs in the "as it happened" section.
+    folder: src/content/instagram
     extension: yaml
     format: yaml
     create: true

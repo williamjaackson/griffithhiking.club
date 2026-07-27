@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:favicons": "node scripts/build-favicons.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",

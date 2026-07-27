@@ -1,6 +1,6 @@
 ---
 import { Picture } from "astro:assets";
-import { getCollection, getEntry } from "astro:content";
+import { getCollection } from "astro:content";
 import { links } from "../lib/links";
 import Difficulty from "./Difficulty.astro";
 import {
@@ -9,6 +9,7 @@ import {
   formatDateRange,
   splitUpcoming,
 } from "../lib/events";
+import { getHome } from "../lib/home";
 
 /** Upcoming hikes.
  *
@@ -24,8 +25,8 @@ const { next, queue } = splitUpcoming(
 );
 const nextBadge = next ? formatBadge(next) : null;
 
-const home = await getEntry("home", "index");
-const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
+const home = await getHome();
+const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home;
 ---
 
 <section class="px-gutter py-section" data-tone="paper" id="upcoming">

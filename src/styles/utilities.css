@@ -29,3 +29,10 @@
   font-weight: 400;
   text-transform: uppercase;
 }
+
+/* The mockup's editorial treatment: every club photograph is desaturated and
+ * warmed slightly so the greens across the page sit together. Promoted from
+ * PhotoRail once the Instagram gallery became the second consumer. */
+@utility photo-muted {
+  filter: saturate(0.68) sepia(0.12);
+}

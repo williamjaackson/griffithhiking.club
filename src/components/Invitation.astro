@@ -1,0 +1,137 @@
+---
+import { Picture } from "astro:assets";
+import { links } from "../lib/links";
+import { getHome } from "../lib/home";
+
+/** The closing invitation.
+ *
+ *  The page has spent its length showing what the club does; this asks. So it
+ *  carries one message and one action, and nothing else competes with them.
+ *
+ *  A section rather than the footer: it is the page's last piece of content,
+ *  not its colophon. The contentinfo landmark belongs to the bar underneath.
+ */
+/** The photograph is editable; the wording is not. Which photo closes the page
+ *  is a judgement about the club, so it belongs to the editor - while the ask
+ *  itself, and the colophon below, are fixed. */
+const { invitationPhoto, invitationPhotoAlt, invitationFocalPoint } =
+  await getHome();
+---
+
+<section
+  class="invitation"
+  data-tone="olive"
+  aria-labelledby="invitation-title"
+>
+  <div class="invitation__frame">
+    <Picture
+      class="invitation__photo photo-muted"
+      style={`object-position: ${invitationFocalPoint}`}
+      src={invitationPhoto}
+      alt={invitationPhotoAlt}
+      formats={["avif", "webp"]}
+      fallbackFormat="jpeg"
+      widths={[640, 960, 1280]}
+      sizes="(width >= 52rem) 55vw, 100vw"
+      quality={70}
+      loading="lazy"
+    />
+  </div>
+
+  <div class="invitation__panel px-gutter">
+    <p class="eyebrow" style="color: var(--tone-accent)">
+      First hike or fiftieth
+    </p>
+    <h2
+      id="invitation-title"
+      class="invitation__title font-display mt-7 uppercase"
+    >
+      Come<br />with us.
+    </h2>
+    <a
+      class="invitation__cta rounded-pill px-control-inline py-control-block gap-control-gap eyebrow bg-cream text-olive-dark mt-8 inline-flex w-fit items-center"
+      href={links.campusGroups}
+      target="_blank"
+      rel="noreferrer"
+      data-join
+    >
+      Become a member
+    </a>
+  </div>
+</section>
+
+<style>
+  /* Olive behind the photo as well as beside it, so the seam between the two
+     halves never shows while the image is still loading. */
+  .invitation {
+    display: grid;
+    background: var(--tone-bg);
+  }
+
+  /* The frame owns the height, the photograph only fills it.
+     A percentage height on the image resolves against an indefinite grid row,
+     so it falls back to the image's intrinsic size - 1706px tall at this
+     column width - and the band was sized by the photograph rather than by
+     anything asked for here. Taking the image out of flow ends that. */
+  .invitation__frame {
+    position: relative;
+    height: min(46vh, 17rem);
+  }
+
+  .invitation__photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .invitation__panel {
+    padding-block: clamp(2.75rem, 1.5rem + 5.5vw, 4.5rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* The tightest leading on the page. Caps have no descenders, so the two lines
+     can close right up, which is what makes the phrase read as one block rather
+     than two lines of a heading. */
+  .invitation__title {
+    font-size: var(--text-statement);
+    line-height: 0.82;
+  }
+
+  .invitation__cta {
+    box-shadow: 0 0.9rem 2.2rem
+      color-mix(in srgb, var(--color-ink) 26%, transparent);
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      box-shadow var(--duration-base) ease,
+      background-color var(--duration-base) ease;
+  }
+
+  .invitation__cta:hover {
+    transform: translateY(-2px);
+    background-color: var(--color-white);
+    box-shadow: 0 1.3rem 2.9rem
+      color-mix(in srgb, var(--color-ink) 34%, transparent);
+  }
+
+  .invitation__cta:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  /* Side by side once there is room, with the photograph taking the larger
+     share - it is the last thing the page shows of the club itself. */
+  @media (width >= 52rem) {
+    .invitation {
+      grid-template-columns: 1.15fr 1fr;
+      align-items: stretch;
+    }
+
+    .invitation__frame {
+      height: auto;
+      min-height: 20rem;
+    }
+  }
+</style>

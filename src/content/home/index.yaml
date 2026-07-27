@@ -6,9 +6,15 @@ photo: hero.jpg
 photoAlt: ""
 focalPoint: 50% 54%
 eventsPhoto: events.jpg
-eventsPhotoAlt: Four club members together on a rainforest trail
+eventsPhotoAlt: Four club members standing together and smiling on a rainforest
+  trail
 eventsFocalPoint: 50% 38%
 caption: Pats Bluff · Lamington NP · Sunset
+invitationPhoto: invitation.jpg
+invitationPhotoAlt:
+  Three hikers at a lookout in low golden light, looking down at
+  something one of them is holding, with mountain ranges behind
+invitationFocalPoint: 50% 67%
 statement: |-
   The best part of the view
   is who you share it with.

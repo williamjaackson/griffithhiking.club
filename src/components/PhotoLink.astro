@@ -1,0 +1,86 @@
+---
+import { Picture } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import { links } from "../lib/links";
+
+/** A club photograph that links to Instagram.
+ *
+ *  Both galleries frame their photos the same way - the arch clips, the picture
+ *  scales inside it on hover, and the accessible name says where the link goes
+ *  as well as what the photo shows. Only the shape of the frame differs, so
+ *  that is the part the caller controls.
+ */
+interface Props {
+  photo: ImageMetadata;
+  alt: string;
+  /** Fixes the frame's proportions. Omit when the caller sets a height. */
+  ratio?: string;
+  widths: number[];
+  sizes: string;
+  class?: string;
+}
+
+const { photo, alt, ratio, widths, sizes, class: className } = Astro.props;
+---
+
+{
+  /* A ratio has to switch the height off. The default below fills the caller's
+    box, and a definite height plus an aspect ratio makes the ratio drive the
+    *width* instead - which overflowed the frame past its own column. */
+}
+<a
+  class:list={["frame rounded-organic", className]}
+  style={ratio ? `aspect-ratio: ${ratio}; height: auto` : undefined}
+  href={links.instagram}
+  target="_blank"
+  rel="noreferrer"
+>
+  <Picture
+    class="frame__photo photo-muted"
+    src={photo}
+    alt={alt}
+    formats={["avif", "webp"]}
+    fallbackFormat="jpeg"
+    widths={widths}
+    sizes={sizes}
+    quality={70}
+    loading="lazy"
+  />
+  {
+    /* The alt text names the photo; this names where the link goes, so the
+      accessible name is both rather than just a description. */
+  }
+  <span class="sr-only">on Instagram</span>
+  <slot />
+</a>
+
+<style>
+  /* The arch carries the clipping so the silhouette stays fixed while the photo
+     scales inside it. Putting the radius on the image instead would scale the
+     shape too.
+
+     Positioned so anything absolute inside - the sr-only text, an overlaid
+     caption - resolves against this frame. Without it the sr-only span is laid
+     out against the root, escapes the rail's clip, and drags the page's scroll
+     width sideways on a phone. */
+  .frame {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .frame__photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--duration-slow) var(--ease-soft);
+  }
+
+  /* Neutered by the base layer's reduced-motion rule. */
+  .frame:hover .frame__photo,
+  .frame:focus-visible .frame__photo {
+    transform: scale(1.05);
+  }
+</style>
