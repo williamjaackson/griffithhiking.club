@@ -1,7 +1,7 @@
 ---
 import { Picture } from "astro:assets";
 import { links } from "../lib/links";
-import photo from "../assets/invitation.jpg";
+import { getHome } from "../lib/home";
 
 /** The closing invitation.
  *
@@ -11,12 +11,11 @@ import photo from "../assets/invitation.jpg";
  *  A section rather than the footer: it is the page's last piece of content,
  *  not its colophon. The contentinfo landmark belongs to the bar underneath.
  */
-/** The photograph is design rather than content, so it lives in src/assets and
- *  is not offered in the CMS. Everything here is fixed furniture: the closing
- *  ask does not change from week to week the way the hikes do. */
-const ALT =
-  "Three hikers at a lookout in low golden light, looking down at" +
-  " something one of them is holding, with mountain ranges behind";
+/** The photograph is editable; the wording is not. Which photo closes the page
+ *  is a judgement about the club, so it belongs to the editor - while the ask
+ *  itself, and the colophon below, are fixed. */
+const { invitationPhoto, invitationPhotoAlt, invitationFocalPoint } =
+  await getHome();
 ---
 
 <section
@@ -27,9 +26,9 @@ const ALT =
   <div class="invitation__frame">
     <Picture
       class="invitation__photo photo-muted"
-      style="object-position: 50% 67%"
-      src={photo}
-      alt={ALT}
+      style={`object-position: ${invitationFocalPoint}`}
+      src={invitationPhoto}
+      alt={invitationPhotoAlt}
       formats={["avif", "webp"]}
       fallbackFormat="jpeg"
       widths={[640, 960, 1280]}

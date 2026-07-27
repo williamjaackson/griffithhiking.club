@@ -41,6 +41,16 @@ const home = defineCollection({
         .default("50% 38%"),
       /** Names the place in the photo, so it has to change when the photo does. */
       caption: z.string(),
+      /** The photograph in the closing band. Editable: which photo closes the
+       *  page is a judgement about the club, not about the layout. */
+      invitationPhoto: image(),
+      invitationPhotoAlt: z
+        .string()
+        .min(1, "the closing photo shows people, so it needs a description"),
+      invitationFocalPoint: z
+        .string()
+        .regex(/^[\d.%a-z\s]+$/i, "must be a CSS object-position value")
+        .default("50% 67%"),
       statement: z.string(),
     }),
 });

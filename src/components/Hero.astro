@@ -1,13 +1,13 @@
 ---
 import { Image, Picture } from "astro:assets";
-import { getEntry } from "astro:content";
 import clubLogo from "../assets/club-logo.png";
 import { links } from "../lib/links";
 import Lines from "./Lines.astro";
+import { getHome } from "../lib/home";
 
 // The mark stays in src/assets: it is the club's identity, not editable content.
-const home = await getEntry("home", "index");
-const { eyebrow, headline, photo, photoAlt, focalPoint, caption } = home!.data;
+const home = await getHome();
+const { eyebrow, headline, photo, photoAlt, focalPoint, caption } = home;
 ---
 
 {
