@@ -1,0 +1,361 @@
+---
+import { Picture } from "astro:assets";
+import { getCollection, getEntry } from "astro:content";
+import { links } from "../lib/links";
+import Difficulty from "./Difficulty.astro";
+import {
+  clubToday,
+  formatBadge,
+  formatDateRange,
+  splitUpcoming,
+} from "../lib/events";
+
+/** Upcoming hikes.
+ *
+ *  The date filtering happens at build time, so what ships is already correct
+ *  and the page needs no JavaScript to stay that way. A daily scheduled rebuild
+ *  rolls the dates over - see .github/workflows/deploy.yml. Because filtering is
+ *  day-granular, once a day is exactly enough.
+ */
+const all = await getCollection("events");
+const { next, queue } = splitUpcoming(
+  all.map((entry) => entry.data),
+  clubToday(new Date()),
+);
+const nextBadge = next ? formatBadge(next) : null;
+
+const home = await getEntry("home", "index");
+const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
+---
+
+<section class="px-gutter py-section" data-tone="paper" id="upcoming">
+  <div class="mx-auto max-w-5xl">
+    <h2 class="text-section font-display uppercase">Upcoming hikes</h2>
+
+    {
+      next ? (
+        <div class="events__layout mt-12 grid items-start gap-10">
+          {/* The next departure is the one thing a visitor is actually looking
+              for, so it is the photograph: a single tall frame carrying the
+              date, the destination and the only button in the section.
+              The ink tone gives cream text, and leaves something legible
+              behind the photo if it ever fails to load. */}
+          <article
+            class="events__next rounded-organic relative isolate flex flex-col justify-end overflow-hidden p-8 sm:p-10"
+            data-tone="ink"
+          >
+            {/* AVIF first, WebP next, JPEG as the floor - the same ladder as
+                the hero and the rail. The card is capped by the container
+                rather than growing with the viewport, so `sizes` is a fixed
+                width above the breakpoint: a vw figure would over-request on a
+                wide screen and fetch an image no larger than 900w can fill. */}
+            <Picture
+              class="absolute inset-0 -z-20 h-full w-full object-cover"
+              style={`object-position: ${eventsFocalPoint}`}
+              src={eventsPhoto}
+              alt={eventsPhotoAlt}
+              formats={["avif", "webp"]}
+              fallbackFormat="jpeg"
+              widths={[320, 480, 640]}
+              sizes="(width >= 60rem) 24rem, 92vw"
+              quality={72}
+              loading="lazy"
+            />
+            <div class="events__scrim absolute inset-0 -z-10" />
+
+            <p class="eyebrow events__label absolute">Next departure</p>
+
+            {/* The abbreviated date is styling, so it is hidden from assistive
+                technology and the full date given instead - otherwise a screen
+                reader announces the same date twice, once unintelligibly. */}
+            <time class="flex items-baseline gap-3" datetime={next.start}>
+              <span class="events__day font-display" aria-hidden="true">
+                {nextBadge!.day}
+              </span>
+              <span class="caption" aria-hidden="true">
+                {nextBadge!.month}
+              </span>
+              <span class="sr-only">{formatDateRange(next)}</span>
+            </time>
+
+            <h3 class="events__title font-serif mt-6">{next.title}</h3>
+            <p class="caption mt-3 opacity-90">
+              {next.place} · {next.detail}
+            </p>
+
+            {next.difficulty && (
+              <p class="events__meta mt-4">
+                <Difficulty level={next.difficulty} />
+              </p>
+            )}
+
+            {/* An application-only outing has one action, and it is the form.
+                Everything else opens the join dialog, which is the club's
+                standing call to action. */}
+            {next.applyUrl ? (
+              <a
+                class="events__cta rounded-pill px-control-inline py-control-block gap-control-gap eyebrow bg-cream text-olive-dark mt-7 inline-flex w-fit items-center"
+                href={next.applyUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Apply
+              </a>
+            ) : (
+              <a
+                class="events__cta rounded-pill px-control-inline py-control-block gap-control-gap eyebrow bg-cream text-olive-dark mt-7 inline-flex w-fit items-center"
+                href={links.campusGroups}
+                target="_blank"
+                rel="noreferrer"
+                data-join
+              >
+                {next.kind === "social" ? "Join the club" : "Join this hike"}
+              </a>
+            )}
+
+            {/* Sits under the button rather than beside the grade, because it
+                qualifies the action: it is the answer to "what happens when I
+                press this", not another property of the hike. */}
+            {next.applyUrl && (
+              <p class="events__note caption mt-4">Applications only</p>
+            )}
+          </article>
+
+          {/* An ordered list because the order is the meaning: these are the
+              hikes queued behind the next one. */}
+          <ol class="events__queue">
+            {queue.map((event) => {
+              const badge = formatBadge(event);
+              return (
+                <li
+                  class="events__row grid items-center gap-5"
+                  data-kind={event.kind}
+                >
+                  <time class="caption events__date" datetime={event.start}>
+                    <span aria-hidden="true">
+                      {badge.day} {badge.month}
+                    </span>
+                    <span class="sr-only">{formatDateRange(event)}</span>
+                  </time>
+                  <span>
+                    <span class="events__name font-serif block">
+                      {event.title}
+                    </span>
+                    <span class="caption mt-2 block opacity-70">
+                      {event.place}
+                    </span>
+                    {/* The designated spot for what qualifies the outing: how
+                        hard it is, and whether you have to apply. Wraps on a
+                        narrow row, and pushes the apply link to the far edge
+                        on a wide one. */}
+                    {(event.difficulty || event.applyUrl) && (
+                      <span class="events__meta mt-3">
+                        {event.difficulty && (
+                          <Difficulty level={event.difficulty} />
+                        )}
+                        {event.applyUrl && (
+                          <span class="events__apply-group">
+                            <span class="events__note caption">
+                              Applications only
+                            </span>
+                            <a
+                              class="events__apply rounded-pill caption"
+                              href={event.applyUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Apply
+                              <span class="sr-only"> for {event.title}</span>
+                            </a>
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ) : (
+        /* A real state, not a defensive branch: between trimesters the calendar
+           genuinely empties. Saying so beats an empty section, and points at the
+           place announcements actually happen. */
+        <p class="text-lead font-serif mt-12">
+          No hikes on the calendar right now. New ones are announced first on{" "}
+          <a
+            class="events__link"
+            href={links.whatsapp}
+            target="_blank"
+            rel="noreferrer"
+          >
+            WhatsApp
+          </a>{" "}
+          and{" "}
+          <a
+            class="events__link"
+            href={links.instagram}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Instagram
+          </a>
+          .
+        </p>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  /* The photograph and the queue share a row from the point there is room for
+     both. Below that the photo leads and the queue follows. The photo takes the
+     narrower column: it is portrait, and the queue carries more text. */
+  @media (width >= 60rem) {
+    .events__layout {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr);
+      gap: var(--spacing-gutter);
+    }
+  }
+
+  /* Portrait, and tall enough that the arch reads as a shape rather than a
+     rounded corner. Bounded so it cannot dominate a short laptop screen. */
+  .events__next {
+    min-height: clamp(30rem, 58vw, 44rem);
+  }
+
+  /* Darkens towards the base so the date, title and pill hold contrast over
+     whatever part of the photo sits behind them. Same construction as the
+     hero's scrim, derived from a token rather than a literal colour. */
+  .events__scrim {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-black) 62%, transparent) 0%,
+      color-mix(in srgb, var(--color-black) 55%, transparent) 10%,
+      color-mix(in srgb, var(--color-black) 6%, transparent) 28%,
+      color-mix(in srgb, var(--color-black) 78%, transparent) 100%
+    );
+  }
+
+  /* Centred, not tucked into the corner. The arch cuts the top corners away
+     entirely - at the sides the curve drops by 22% of the card's height - so a
+     corner label sits outside the shape and `overflow: hidden` clips it. The
+     apex of the arch is at the horizontal centre, where the card is at full
+     height, which is the only part of the top edge with room for text. */
+  .events__label {
+    top: 2rem;
+    inset-inline: 0;
+    text-align: center;
+    opacity: 0.85;
+  }
+
+  @media (width >= 40rem) {
+    .events__label {
+      top: 2.5rem;
+    }
+  }
+
+  /* Display-scale numerals: the date is the loudest thing on the card. */
+  .events__day {
+    font-size: var(--text-section);
+    line-height: 0.8;
+  }
+
+  .events__title {
+    font-size: var(--text-statement);
+    line-height: 0.95;
+    letter-spacing: var(--text-statement--letter-spacing);
+  }
+
+  .events__cta {
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      background-color var(--duration-base) ease;
+  }
+
+  .events__cta:hover {
+    transform: translateY(-2px);
+    background-color: var(--color-white);
+  }
+
+  .events__cta:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  /* A ledger: one firm rule opening the list, hairlines between the rows.
+     Both derived from the tone's own foreground, so this works on any tone. */
+  .events__queue {
+    border-top: 2px solid currentColor;
+  }
+
+  .events__row {
+    grid-template-columns: 6rem minmax(0, 1fr);
+    min-height: 7rem;
+    padding-block: 1.25rem;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  }
+
+  /* Tabular so the dates form a column even with different digit widths. */
+  .events__date {
+    font-variant-numeric: tabular-nums;
+    color: var(--tone-accent);
+    align-self: center;
+  }
+
+  .events__name {
+    font-size: var(--text-title);
+    line-height: 1;
+    letter-spacing: var(--text-title--letter-spacing);
+  }
+
+  /* Everything qualifying the outing sits on one line that wraps rather than
+     overflows, so a narrow row stacks instead of squeezing the title. */
+  .events__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.9rem;
+  }
+
+  /* A social night is not a hike: its date loses the accent colour that marks
+     the hiking entries, so the list can be scanned for hikes alone. */
+  .events__row[data-kind="social"] .events__date {
+    color: color-mix(in srgb, currentColor 55%, transparent);
+  }
+
+  /* Quiet: it qualifies the outing rather than competing with its name. On the
+     card the button above already links to the form, so there it is plain text;
+     in a row it has to be the link itself, because the row has no button. */
+  .events__note {
+    opacity: 0.72;
+  }
+
+  /* The words and the button travel together, pushed to the row's far edge
+     when there is room and wrapping under the grade when there is not. */
+  .events__apply-group {
+    margin-inline-start: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .events__apply {
+    padding: 0.45rem 0.9rem;
+    background: var(--tone-fg);
+    color: var(--tone-bg);
+    white-space: nowrap;
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      opacity var(--duration-base) ease;
+  }
+
+  .events__apply:hover {
+    transform: translateY(-1px);
+    opacity: 0.88;
+  }
+
+  .events__link {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+</style>

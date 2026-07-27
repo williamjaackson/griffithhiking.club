@@ -37,6 +37,9 @@ jobs:
       # The CMS config and the content schema must not drift apart.
       - run: pnpm check:cms
 
+      # The date rules decide which hikes are shown at all.
+      - run: pnpm test
+
       # Type-checks .astro templates as well as .ts. Requires TypeScript 6.x:
       # the 7.x native compiler does not expose the API this relies on.
       - run: pnpm check

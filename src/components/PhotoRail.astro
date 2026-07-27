@@ -93,6 +93,12 @@ const frames = (await getCollection("moments")).sort(
   .rail__link {
     display: block;
     overflow: hidden;
+    /* Not for placing anything: this is the containing block for the sr-only
+       text inside. Without it that span is positioned against the root, which
+       puts it outside the rail's clip - so it sat wherever the scrolled content
+       ended and dragged the whole page's scroll width out with it, giving the
+       site a horizontal scrollbar on a phone. */
+    position: relative;
   }
 
   .rail__photo {

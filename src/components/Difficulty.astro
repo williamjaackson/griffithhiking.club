@@ -1,0 +1,120 @@
+---
+import {
+  DIFFICULTY_LABELS,
+  difficultyRank,
+  type Difficulty,
+} from "../lib/events";
+
+/** How hard a hike is, drawn as mountains.
+ *
+ *  One icon repeated, one to five times, in a colour that runs green to red.
+ *  Two signals carrying the same meaning: the count can be read precisely, the
+ *  colour can be read at a glance, and neither depends on the other - which
+ *  matters here, because red and green are exactly the pair most likely to be
+ *  indistinguishable, so the count has to stand on its own.
+ *
+ *  The label is a tooltip rather than standing text. It would otherwise repeat
+ *  down the list and compete with the destinations, which are what the list is
+ *  actually for.
+ */
+interface Props {
+  level: Difficulty;
+}
+
+const { level } = Astro.props;
+const label = DIFFICULTY_LABELS[level];
+const peaks = Array.from({ length: difficultyRank(level) });
+---
+
+{
+  /* role and label carry the whole meaning, so the drawing and the visible
+    tooltip are both hidden from assistive technology rather than repeated.
+    Focusable so the tooltip is reachable without a pointer. */
+}
+<span
+  class="grade"
+  data-level={level}
+  role="img"
+  aria-label={`Difficulty: ${label}`}
+  tabindex="0"
+>
+  {
+    peaks.map(() => (
+      <svg
+        class="grade__peak"
+        viewBox="0 0 20 16"
+        aria-hidden="true"
+        focusable="false"
+      >
+        {/* A tall peak with a smaller one behind it. A lone triangle reads as
+            a triangle at this size; the second summit is what makes it a
+            mountain. Both sit on one baseline so a row of them is a range. */}
+        <path d="M0.5 15 L7 2.5 L13.5 15 Z M11.6 15 L15.6 7.4 L19.5 15 Z" />
+      </svg>
+    ))
+  }
+  <span class="grade__label caption" aria-hidden="true">{label}</span>
+</span>
+
+<style>
+  .grade {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.12em;
+    /* The ramp is selected once here and inherited by the peaks below, so a
+       grade's colour is set in exactly one place. */
+    color: var(--grade-ink);
+  }
+
+  .grade[data-level="easy"] {
+    --grade-ink: var(--color-grade-easy);
+  }
+  .grade[data-level="easy-moderate"] {
+    --grade-ink: var(--color-grade-easy-moderate);
+  }
+  .grade[data-level="moderate"] {
+    --grade-ink: var(--color-grade-moderate);
+  }
+  .grade[data-level="moderate-hard"] {
+    --grade-ink: var(--color-grade-moderate-hard);
+  }
+  .grade[data-level="hard"] {
+    --grade-ink: var(--color-grade-hard);
+  }
+
+  /* Sized in em so the range tracks whatever text sits beside it. */
+  .grade__peak {
+    width: 0.95em;
+    height: 0.76em;
+    fill: currentColor;
+    flex: none;
+  }
+
+  /* A tooltip: the grade is supporting information, and printing it beside
+     every entry would crowd out the destinations. Inverted from the tone it
+     sits on, so it works on the photo card and the paper list alike. */
+  .grade__label {
+    position: absolute;
+    bottom: calc(100% + 0.45rem);
+    /* Centred over the icons rather than aligned to their first peak. */
+    left: 50%;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-pill);
+    background: var(--tone-fg);
+    color: var(--tone-bg);
+    white-space: nowrap;
+    opacity: 0;
+    translate: -50% 0.25rem;
+    pointer-events: none;
+    transition:
+      opacity var(--duration-base) ease,
+      translate var(--duration-base) var(--ease-soft);
+  }
+
+  .grade:hover .grade__label,
+  .grade:focus-visible .grade__label {
+    opacity: 1;
+    translate: -50% 0;
+  }
+</style>

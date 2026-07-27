@@ -3,6 +3,12 @@ name: Deploy
 on:
   push:
     branches: [main]
+  # Which hikes are upcoming is decided at build time, so the site has to be
+  # rebuilt to notice the day changing. 19:00 UTC is 05:00 in Brisbane, so the
+  # rollover happens overnight rather than while anyone is reading the page.
+  # Filtering is day-granular, so once a day is exactly enough.
+  schedule:
+    - cron: "0 19 * * *"
   workflow_dispatch:
 
 # Never cancel a deploy midway - a half-applied release is worse than a slow one.
