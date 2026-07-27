@@ -3,6 +3,11 @@ import "../styles/global.css";
 // Imported for its URL so the preload below and the @font-face that fontsource
 // generates resolve to the same built asset, rather than two copies.
 import antonWoff2 from "@fontsource/anton/files/anton-latin-400-normal.woff2?url";
+// Read rather than repeated: the browser chrome colour is a palette value, and
+// a second copy of it here is exactly the drift the token layer exists to stop.
+import tokens from "../styles/tokens.css?raw";
+
+const themeColor = tokens.match(/--color-olive:\s*(#[0-9a-f]{6})/i)?.[1];
 
 interface Props {
   title: string;
@@ -16,7 +21,17 @@ const { title, description } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {
+      /* The club badge, generated from src/assets/club-logo.png by
+         scripts/build-favicons.mjs. The .ico is listed first and unqualified so
+         the browsers that only look for one still find it. */
+    }
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/favicon-192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content={themeColor} />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
 
@@ -36,5 +51,10 @@ const { title, description } = Astro.props;
     <main id="main">
       <slot />
     </main>
+    {
+      /* Named so the footer lands outside main, where a contentinfo landmark
+        belongs, and so a page can leave it out - the styleguide does. */
+    }
+    <slot name="footer" />
   </body>
 </html>
