@@ -85,14 +85,8 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
 
             <p class="events__meta mt-4">
               {next.difficulty && <Difficulty level={next.difficulty} />}
-              {next.kind === "trip" && (
-                <span class="events__tag">Overnight</span>
-              )}
-              {next.kind === "social" && (
-                <span class="events__tag">Social</span>
-              )}
               {next.applyUrl && (
-                <span class="events__tag is-apply">Application only</span>
+                <span class="events__flag">Application only</span>
               )}
             </p>
 
@@ -144,19 +138,13 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                     <span class="caption mt-2 block opacity-70">
                       {event.place}
                     </span>
-                    {/* The designated spot for everything that qualifies the
-                        outing: how hard it is, what sort of thing it is, and
-                        whether you have to apply. Wraps on a narrow row, and
-                        pushes the apply link to the far edge on a wide one. */}
+                    {/* The designated spot for what qualifies the outing: how
+                        hard it is, and whether you have to apply. Wraps on a
+                        narrow row, and pushes the apply link to the far edge
+                        on a wide one. */}
                     <span class="events__meta mt-3">
                       {event.difficulty && (
                         <Difficulty level={event.difficulty} />
-                      )}
-                      {event.kind === "trip" && (
-                        <span class="events__tag">Overnight</span>
-                      )}
-                      {event.kind === "social" && (
-                        <span class="events__tag">Social</span>
                       )}
                       {event.applyUrl && (
                         <a
@@ -314,26 +302,19 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
     gap: 0.5rem 0.9rem;
   }
 
-  /* Says what sort of outing it is, for the ones that are not simply a hike.
-     Outlined rather than filled: it qualifies the entry, it does not compete
-     with the title. */
-  .events__tag {
+  /* Application-only is a condition of entry rather than a label, so it is
+     filled in: you cannot simply turn up to this one, and that has to be read
+     before the button below it is. */
+  .events__flag {
     font-size: var(--text-eyebrow);
     letter-spacing: 0.14em;
     font-weight: 800;
     text-transform: uppercase;
     padding: 0.3rem 0.65rem;
-    border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
     border-radius: var(--radius-pill);
-    white-space: nowrap;
-  }
-
-  /* Application-only is a condition of entry, not a category, so it is the one
-     tag that is filled in. */
-  .events__tag.is-apply {
-    border-color: transparent;
     background: var(--tone-accent);
     color: var(--color-olive-dark);
+    white-space: nowrap;
   }
 
   /* Pushed to the far edge when the row is wide enough, wrapping under with

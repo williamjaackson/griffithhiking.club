@@ -1,90 +1,129 @@
 ---
 import {
-  DIFFICULTIES,
   DIFFICULTY_LABELS,
   difficultyRank,
   type Difficulty,
 } from "../lib/events";
 
-/** How hard a hike is, drawn as a ridgeline.
+/** How hard a hike is, drawn as bootprints.
  *
- *  Five peaks rising left to right, filled up to the grade. A row of identical
- *  dots or bars would say the same thing in the vocabulary of a wifi meter;
- *  this says it in the vocabulary of the thing being described, and reads as
- *  terrain before it reads as a scale.
+ *  One icon repeated, one to five times, in a colour that runs green to red.
+ *  Two signals carrying the same meaning: the count can be read precisely, the
+ *  colour can be read at a glance, and neither depends on the other - which is
+ *  what keeps the scale legible to anyone who cannot separate the hues.
  *
- *  The five grades map one-to-one onto five peaks, so the scale needs no
- *  rounding and no half states.
+ *  Rating a trail in boots is the convention this borrows from, and it beats a
+ *  row of neutral dots for the same reason a ridgeline did: it belongs to the
+ *  thing being described.
+ *
+ *  The label is a tooltip rather than standing text. It would otherwise repeat
+ *  down the list and compete with the destinations, which are what the list is
+ *  actually for.
  */
 interface Props {
   level: Difficulty;
 }
 
 const { level } = Astro.props;
-const filled = difficultyRank(level);
-
-// Peaks sit on a shared baseline, each one taller than the last. Laid out in
-// the viewBox's own units so the shape scales with the font rather than being
-// pinned to pixels.
-const BASE = 16;
-const peaks = DIFFICULTIES.map((_, i) => ({
-  points: `${i * 9},${BASE} ${i * 9 + 4},${BASE - (5 + i * 2.5)} ${i * 9 + 8},${BASE}`,
-  on: i < filled,
-}));
+const label = DIFFICULTY_LABELS[level];
+const prints = Array.from({ length: difficultyRank(level) }, (_, i) => i);
 ---
 
-<span class="grade" data-level={level}>
-  <svg
-    class="grade__ridge"
-    viewBox="0 0 44 16"
-    aria-hidden="true"
-    focusable="false"
-  >
-    {
-      peaks.map((peak) => (
-        <polygon
-          class:list={["grade__peak", peak.on && "is-on"]}
-          points={peak.points}
-        />
-      ))
-    }
-  </svg>
-  <span class="grade__label caption">{DIFFICULTY_LABELS[level]}</span>
+{
+  /* role and label carry the whole meaning, so the drawing and the visible
+    tooltip are both hidden from assistive technology rather than repeated.
+    Focusable so the tooltip is reachable without a pointer. */
+}
+<span
+  class="grade"
+  data-level={level}
+  role="img"
+  aria-label={`Difficulty: ${label}`}
+  tabindex="0"
+>
+  {
+    prints.map((i) => (
+      <svg
+        class="grade__print"
+        data-step={i % 2}
+        viewBox="0 0 16 20"
+        aria-hidden="true"
+        focusable="false"
+      >
+        {/* Sole and heel as two shapes: a single blob loses its footprint at
+            this size, the gap between them is what makes it read. */}
+        <ellipse cx="8" cy="6.4" rx="5.2" ry="6.2" />
+        <ellipse cx="8" cy="16.6" rx="3.9" ry="3.3" />
+      </svg>
+    ))
+  }
+  <span class="grade__label caption" aria-hidden="true">{label}</span>
 </span>
 
 <style>
   .grade {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.2em;
+    /* The ramp is selected once here and inherited by the prints below, so a
+       grade's colour is set in exactly one place. */
+    color: var(--grade-ink);
   }
 
-  /* Sized in em so the ridge tracks the label beside it. */
-  .grade__ridge {
-    width: 2.9em;
-    height: 1.05em;
-    overflow: visible;
+  .grade[data-level="easy"] {
+    --grade-ink: var(--color-grade-easy);
+  }
+  .grade[data-level="easy-moderate"] {
+    --grade-ink: var(--color-grade-easy-moderate);
+  }
+  .grade[data-level="moderate"] {
+    --grade-ink: var(--color-grade-moderate);
+  }
+  .grade[data-level="moderate-hard"] {
+    --grade-ink: var(--color-grade-moderate-hard);
+  }
+  .grade[data-level="hard"] {
+    --grade-ink: var(--color-grade-hard);
+  }
+
+  /* Sized in em so the prints track whatever text sits beside them. */
+  .grade__print {
+    width: 0.72em;
+    height: 0.9em;
+    fill: currentColor;
     flex: none;
   }
 
-  /* Unclimbed peaks stay in the same ink at low strength rather than becoming
-     outlines: a 1px stroke at this size reads as noise, and the silhouette of
-     the whole ridge is the point. */
-  .grade__peak {
-    fill: currentColor;
-    opacity: 0.22;
+  /* Alternating prints sit a touch lower, so a row of them reads as a track
+     across the ground rather than a row of identical marks. */
+  .grade__print[data-step="1"] {
+    translate: 0 0.16em;
   }
 
-  .grade__peak.is-on {
-    opacity: 1;
-  }
-
-  /* The hardest grade is the one worth noticing before you read the word. */
-  .grade[data-level="hard"] .grade__peak.is-on {
-    fill: var(--tone-accent);
-  }
-
+  /* A tooltip: the grade is supporting information, and printing it beside
+     every entry would crowd out the destinations. Inverted from the tone it
+     sits on, so it works on the photo card and the paper list alike. */
   .grade__label {
+    position: absolute;
+    bottom: calc(100% + 0.45rem);
+    left: 0;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-pill);
+    background: var(--tone-fg);
+    color: var(--tone-bg);
     white-space: nowrap;
+    opacity: 0;
+    translate: 0 0.25rem;
+    pointer-events: none;
+    transition:
+      opacity var(--duration-base) ease,
+      translate var(--duration-base) var(--ease-soft);
+  }
+
+  .grade:hover .grade__label,
+  .grade:focus-visible .grade__label {
+    opacity: 1;
+    translate: 0 0;
   }
 </style>

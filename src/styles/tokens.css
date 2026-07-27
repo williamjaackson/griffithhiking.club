@@ -20,6 +20,21 @@
    * that reads as a grey wash when used at low opacity over a photo. */
   --color-black: #000000;
 
+  /* ---- difficulty ramp ------------------------------------------------ */
+  /* Green through to red, but held to the earth tones the rest of the palette
+   * lives in - a signal red here would be the loudest thing on the page.
+   *
+   * Every step is tuned to the same contrast against both surfaces the icons
+   * appear on: ~3.4:1 on --color-paper and ~3.7:1 on the darkened photo card,
+   * all clearing the 3:1 bar for non-text graphics. Holding contrast constant
+   * is what makes the ramp read as a change of hue rather than a change of
+   * brightness, so no grade looks louder than its position deserves. */
+  --color-grade-easy: #468532;
+  --color-grade-easy-moderate: #6d7e25;
+  --color-grade-moderate: #9c6d1c;
+  --color-grade-moderate-hard: #b85d28;
+  --color-grade-hard: #c45245;
+
   /* ---- families ------------------------------------------------------ */
   /* Anton replaces Impact, which is absent on most Android and has
    * inconsistent metrics across platforms. */
