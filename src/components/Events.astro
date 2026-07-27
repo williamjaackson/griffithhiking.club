@@ -83,12 +83,14 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
               {next.place} · {next.detail}
             </p>
 
-            <p class="events__meta mt-4">
-              {next.difficulty && <Difficulty level={next.difficulty} />}
-              {next.applyUrl && (
-                <span class="events__flag">Application only</span>
-              )}
-            </p>
+            {(next.difficulty || next.applyUrl) && (
+              <p class="events__meta mt-4">
+                {next.difficulty && <Difficulty level={next.difficulty} />}
+                {next.applyUrl && (
+                  <span class="events__flag">Application only</span>
+                )}
+              </p>
+            )}
 
             {/* An application-only outing has one action, and it is the form.
                 Everything else opens the join dialog, which is the club's
@@ -142,22 +144,24 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                         hard it is, and whether you have to apply. Wraps on a
                         narrow row, and pushes the apply link to the far edge
                         on a wide one. */}
-                    <span class="events__meta mt-3">
-                      {event.difficulty && (
-                        <Difficulty level={event.difficulty} />
-                      )}
-                      {event.applyUrl && (
-                        <a
-                          class="events__apply rounded-pill caption"
-                          href={event.applyUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Apply
-                          <span class="sr-only"> for {event.title}</span>
-                        </a>
-                      )}
-                    </span>
+                    {(event.difficulty || event.applyUrl) && (
+                      <span class="events__meta mt-3">
+                        {event.difficulty && (
+                          <Difficulty level={event.difficulty} />
+                        )}
+                        {event.applyUrl && (
+                          <a
+                            class="events__apply rounded-pill caption"
+                            href={event.applyUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Apply
+                            <span class="sr-only"> for {event.title}</span>
+                          </a>
+                        )}
+                      </span>
+                    )}
                   </span>
                 </li>
               );
