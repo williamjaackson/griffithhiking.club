@@ -159,6 +159,12 @@ collections:
         label: Application form link
         widget: string
         required: false
+        # Caught here rather than by the build. The schema requires a real URL,
+        # so a link pasted without https:// fails - and it would fail after
+        # publishing, where nobody is watching.
+        pattern:
+          - "^https://\\S+$"
+          - "Must start with https:// - paste the whole link from your browser's address bar"
         hint: >-
-          Only for hikes where places are by application. Adding a link here is
-          what marks the hike application-only.
+          Any form link works - Google Forms, Microsoft Forms, anything. Adding a
+          link here is what marks the hike application-only.
