@@ -1,0 +1,101 @@
+---
+/** A centre-snapping scroll rail on a phone, a static row from 52rem.
+ *
+ *  Both galleries on the page are the same mechanism with different tracks, so
+ *  the behaviour lives here once: the scroll container, the snapping, the
+ *  spacers that let the first and last frames reach the centre, and the switch
+ *  to a grid on a wide screen.
+ *
+ *  What it deliberately does not own is how the frames look. Callers style
+ *  their own children; this only decides where they sit.
+ */
+interface Props {
+  /** Width of one frame while the rail scrolls. */
+  item?: string;
+  gap?: string;
+  /** Track sizing once the rail becomes a static row. */
+  columns?: string;
+  /** How frames line up vertically in that row. */
+  align?: string;
+  class?: string;
+}
+
+const {
+  item = "min(78vw, 30rem)",
+  gap = "0.85rem",
+  columns = "repeat(3, 1fr)",
+  align = "stretch",
+  class: className,
+} = Astro.props;
+---
+
+<div
+  class:list={["rail", className]}
+  style={`--rail-item: ${item}; --rail-gap: ${gap}; --rail-columns: ${columns}; --rail-align: ${align}`}
+>
+  <slot />
+</div>
+
+<style>
+  .rail {
+    display: flex;
+    gap: var(--rail-gap);
+    /* Full bleed on purpose - the spacers below provide the inset, which is what
+       lets the neighbouring frames peek in from the edges. */
+    /* Both axes stated on purpose. Per spec, `visible` on one axis computes to
+       `auto` when the other is not visible - so `overflow-x: auto` alone would
+       also make this a vertical scroll container, which reads on a phone as
+       being able to scroll past the section. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    /* Snap targets align to the snapport, so without this the rail refuses to
+       rest anywhere except with an item flush to the left edge. */
+    scroll-padding-inline: 0;
+    scrollbar-width: none;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Half the leftover width, less the gap, so the first and last frames can
+     still reach the centre. Without these the rail can only centre the middle
+     item, and the outer two sit off-centre with nowhere to scroll. */
+  .rail::before,
+  .rail::after {
+    content: "";
+    flex: 0 0 calc((100% - var(--rail-item)) / 2 - var(--rail-gap));
+  }
+
+  /* :global because the frames are slotted in by the caller, so they carry the
+     caller's scope rather than this component's. */
+  .rail > :global(*) {
+    flex: 0 0 var(--rail-item);
+    margin: 0;
+    scroll-snap-align: center;
+  }
+
+  /* A static row from here: no scrolling, no snapping, no spacers. */
+  @media (width >= 52rem) {
+    .rail {
+      display: grid;
+      grid-template-columns: var(--rail-columns);
+      align-items: var(--rail-align);
+      padding-inline: var(--spacing-gutter);
+      overflow-x: visible;
+      overflow-y: visible;
+      scroll-snap-type: none;
+    }
+
+    .rail::before,
+    .rail::after {
+      display: none;
+    }
+
+    .rail > :global(*) {
+      flex: none;
+    }
+  }
+</style>

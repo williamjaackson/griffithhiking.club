@@ -1,7 +1,7 @@
 ---
-import { Picture } from "astro:assets";
 import { getCollection } from "astro:content";
-import { links } from "../lib/links";
+import Rail from "./Rail.astro";
+import PhotoLink from "./PhotoLink.astro";
 
 const frames = (await getCollection("moments")).sort(
   (a, b) => a.data.order - b.data.order,
@@ -9,134 +9,22 @@ const frames = (await getCollection("moments")).sort(
 ---
 
 <section class="py-section" data-tone="ink" aria-label="Club moments">
-  {/* A centre-snapping scroll rail on a phone, a three-up grid from 52rem. */}
-  <div class="rail">
+  <Rail>
     {
       frames.map((f) => (
         <figure>
-          <a
-            class="rail__link rounded-organic"
-            href={links.instagram}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Picture
-              class="rail__photo"
-              src={f.data.photo}
-              alt={f.data.alt}
-              formats={["avif", "webp"]}
-              fallbackFormat="jpeg"
-              widths={[480, 780, 1100]}
-              sizes="(min-width: 52rem) 30vw, 78vw"
-              quality={70}
-            />
-            {/* The alt text names the photo; this names where the link goes, so
-                the accessible name is both rather than just a description. */}
-            <span class="sr-only">on Instagram</span>
-          </a>
+          <PhotoLink
+            photo={f.data.photo}
+            alt={f.data.alt}
+            ratio="3 / 4"
+            widths={[480, 780, 1100]}
+            sizes="(min-width: 52rem) 30vw, 78vw"
+          />
           <figcaption class="caption mt-3" style="color: var(--tone-accent)">
             {f.data.caption}
           </figcaption>
         </figure>
       ))
     }
-  </div>
+  </Rail>
 </section>
-
-<style>
-  .rail {
-    /* Stated once: the item width and gap drive the centring spacers below, so
-       the three cannot disagree. */
-    --rail-item: min(78vw, 30rem);
-    --rail-gap: 0.85rem;
-
-    display: flex;
-    gap: var(--rail-gap);
-    /* Full bleed on purpose - the spacers provide the inset, which is what lets
-       the neighbouring frames peek in from the edges. */
-    /* Both axes stated on purpose. Per spec, `visible` on one axis computes to
-       `auto` when the other is not visible - so `overflow-x: auto` alone would
-       also make this a vertical scroll container, which reads on a phone as
-       being able to scroll past the section. */
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-inline: contain;
-    scroll-snap-type: x mandatory;
-    /* Snap targets align to the snapport, so without this the rail refuses to
-       rest anywhere except with an item flush to the left edge. */
-    scroll-padding-inline: 0;
-    scrollbar-width: none;
-  }
-
-  .rail::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Half the leftover width, less the gap, so the first and last frames can
-     still reach the centre. Without these the rail can only centre the middle
-     item, and the outer two sit off-centre with nowhere to scroll. */
-  .rail::before,
-  .rail::after {
-    content: "";
-    flex: 0 0 calc((100% - var(--rail-item)) / 2 - var(--rail-gap));
-  }
-
-  .rail > figure {
-    flex: 0 0 var(--rail-item);
-    margin: 0;
-    scroll-snap-align: center;
-  }
-
-  /* The arch carries the clipping so the silhouette stays fixed while the photo
-     scales inside it. Putting the radius on the image instead would scale the
-     shape too. */
-  .rail__link {
-    display: block;
-    overflow: hidden;
-    /* Not for placing anything: this is the containing block for the sr-only
-       text inside. Without it that span is positioned against the root, which
-       puts it outside the rail's clip - so it sat wherever the scrolled content
-       ended and dragged the whole page's scroll width out with it, giving the
-       site a horizontal scrollbar on a phone. */
-    position: relative;
-  }
-
-  .rail__photo {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 3 / 4;
-    object-fit: cover;
-    /* The mockup's muted treatment: every editorial photo is desaturated and
-       warmed slightly so the greens sit together. Stays local until the second
-       gallery needs it, then it becomes a utility. */
-    filter: saturate(0.68) sepia(0.12);
-    transition: transform var(--duration-slow) var(--ease-soft);
-  }
-
-  /* Zoom on hover. Neutered by the base layer's reduced-motion rule. */
-  .rail__link:hover .rail__photo,
-  .rail__link:focus-visible .rail__photo {
-    transform: scale(1.05);
-  }
-
-  /* Three-up from here: no scrolling, no snapping, no spacers. */
-  @media (width >= 52rem) {
-    .rail {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      padding-inline: var(--spacing-gutter);
-      overflow-x: visible;
-      overflow-y: visible;
-      scroll-snap-type: none;
-    }
-
-    .rail::before,
-    .rail::after {
-      display: none;
-    }
-
-    .rail > figure {
-      flex: none;
-    }
-  }
-</style>

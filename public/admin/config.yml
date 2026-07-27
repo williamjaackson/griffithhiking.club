@@ -97,6 +97,34 @@ collections:
         label: Caption
         widget: string
 
+  - name: instagram
+    label: Instagram gallery
+    description: The three photographs in the "as it happened" section.
+    folder: src/content/instagram
+    extension: yaml
+    format: yaml
+    create: true
+    delete: true
+    media_folder: ""
+    public_folder: ""
+    sortable_fields: [order]
+    summary: "{{order}} · {{caption}}"
+    fields:
+      - name: order
+        label: Position
+        widget: number
+        value_type: int
+      - name: photo
+        label: Photograph
+        widget: image
+      - name: alt
+        label: Description
+        widget: string
+        hint: Describes the photo for anyone who cannot see it. Required.
+      - name: caption
+        label: Caption
+        widget: string
+
   - name: events
     label: Upcoming hikes
     description: >-

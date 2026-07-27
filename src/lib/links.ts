@@ -3,6 +3,7 @@
 export const links = {
   campusGroups: "https://griffith.campusgroups.com/Hikingclub/club_signup",
   whatsapp: "https://chat.whatsapp.com/C9wxhtt5bvh4P89fVc2Yzl?mode=gi_t",
+  instagramHandle: "@griffithhikingclub",
   instagram: "https://www.instagram.com/griffithhikingclub/",
 } as const;
 

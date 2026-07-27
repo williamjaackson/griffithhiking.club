@@ -1,0 +1,219 @@
+---
+import { getCollection } from "astro:content";
+import { links } from "../lib/links";
+import Rail from "./Rail.astro";
+import PhotoLink from "./PhotoLink.astro";
+
+/** The second gallery: what the weekend actually looked like.
+ *
+ *  Shares its mechanism with the photo rail below the hero - same scroll rail on
+ *  a phone, same framing, same muted treatment - but not its rhythm. The tracks
+ *  are uneven and the frames bottom-align, so the row reads as a hung
+ *  arrangement rather than three equal tiles.
+ */
+const frames = (await getCollection("instagram")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<section class="instagram py-section" data-tone="cream" id="instagram">
+  <header class="instagram__head px-gutter">
+    <div>
+      <p class="eyebrow" style="color: var(--tone-accent)">
+        From the trail · On Instagram
+      </p>
+      <h2 class="instagram__title font-serif mt-6">
+        The weekend,<br />as it happened.
+      </h2>
+    </div>
+
+    {
+      /* The handle is the point of the link, so it is the loudest thing in it. */
+    }
+    <a
+      class="instagram__cta rounded-pill bg-olive-dark text-cream"
+      href={links.instagram}
+      target="_blank"
+      rel="noreferrer"
+    >
+      <svg
+        class="instagram__mark"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="5.5"></rect>
+        <circle cx="12" cy="12" r="4.2"></circle>
+        <circle class="instagram__dot" cx="17.1" cy="6.9" r="1.15"></circle>
+      </svg>
+      <span class="instagram__copy">
+        <b class="text-lead font-serif">{links.instagramHandle}</b>
+        <em class="caption">Follow our weekends outside</em>
+      </span>
+    </a>
+  </header>
+
+  <Rail
+    item="min(78vw, 24rem)"
+    gap="0.7rem"
+    columns="1.1fr 0.82fr 1fr"
+    align="end"
+    class="instagram__rail"
+  >
+    {
+      frames.map((f, i) => (
+        <div class="instagram__cell">
+          <PhotoLink
+            photo={f.data.photo}
+            alt={f.data.alt}
+            widths={[320, 480, 640]}
+            sizes="(min-width: 52rem) 38vw, 78vw"
+          >
+            {/* Numbered because the arrangement has an order the uneven
+                heights otherwise hide. */}
+            <span class="instagram__overlay">
+              <span class="instagram__note caption">
+                {String(i + 1).padStart(2, "0")} · {f.data.caption}
+              </span>
+            </span>
+          </PhotoLink>
+        </div>
+      ))
+    }
+  </Rail>
+</section>
+
+<style>
+  /* A field of dots rather than flat cream: the section sits between two solid
+     panels, and the texture stops it reading as a gap between them. Faint
+     enough to be felt rather than seen. */
+  .instagram {
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--color-olive-dark) 7%, transparent) 0.055rem,
+      transparent 0.055rem
+    );
+    background-size: 0.42rem 0.42rem;
+  }
+
+  .instagram__head {
+    margin-bottom: 3.5rem;
+    display: grid;
+    gap: 2.25rem;
+  }
+
+  /* Sits between the section heading and the statement: it is a heading, but
+     the sentence is the point rather than the scale. */
+  .instagram__title {
+    font-size: var(--text-statement);
+    line-height: 0.95;
+    letter-spacing: var(--text-statement--letter-spacing);
+  }
+
+  .instagram__cta {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.85rem 1.4rem 0.85rem 1rem;
+    width: fit-content;
+    max-width: 100%;
+    box-shadow: 0 0.8rem 2.4rem
+      color-mix(in srgb, var(--color-ink) 16%, transparent);
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      box-shadow var(--duration-base) ease;
+  }
+
+  .instagram__cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 1.15rem 2.9rem
+      color-mix(in srgb, var(--color-ink) 24%, transparent);
+  }
+
+  .instagram__mark {
+    width: 2.4rem;
+    height: 2.4rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+  }
+
+  .instagram__dot {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .instagram__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .instagram__copy b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .instagram__copy em {
+    font-style: normal;
+    opacity: 0.72;
+  }
+
+  /* Uniform while the rail scrolls - a staggered set of heights reads as
+     misalignment when only one frame is in view at a time. */
+  .instagram__cell {
+    height: min(118vw, 34rem);
+  }
+
+  /* The arrangement proper, once all three are visible together. Bottom-aligned
+     by the rail, so the varying heights show at the top edge. */
+  @media (width >= 52rem) {
+    .instagram__cell {
+      height: 35rem;
+    }
+
+    .instagram__cell:nth-child(1) {
+      height: 38.5rem;
+    }
+
+    .instagram__cell:nth-child(2) {
+      height: 31rem;
+    }
+  }
+
+  /* Covers the frame rather than sitting in a corner, so the caption always has
+     the same darkening under it wherever the photo is bright. */
+  .instagram__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 1.15rem 1.3rem;
+    background: linear-gradient(
+      180deg,
+      transparent 58%,
+      color-mix(in srgb, var(--color-black) 52%, transparent)
+    );
+  }
+
+  .instagram__note {
+    color: var(--color-cream);
+  }
+
+  /* The heading and the follow link share a row once there is space for both,
+     with the link pushed to the far edge and set on the heading's baseline. */
+  @media (width >= 52rem) {
+    .instagram__head {
+      margin-bottom: 4.75rem;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      align-items: end;
+      gap: 4vw;
+    }
+
+    .instagram__cta {
+      justify-self: end;
+    }
+  }
+</style>
