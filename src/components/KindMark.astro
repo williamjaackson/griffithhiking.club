@@ -1,0 +1,117 @@
+---
+import type { Kind } from "../lib/events";
+
+/** What sort of outing this is, for the ones that are not simply a hike.
+ *
+ *  A mark rather than a worded badge: the list is scanned, not read, and a
+ *  badge saying SOCIAL competed with the destination beside it.
+ *
+ *  The tent carries crossed poles because a bare A-frame reads as a mountain
+ *  at this size, and mountains already mean difficulty two columns to the left.
+ *
+ *  Since the mark is now the only thing distinguishing these entries, it has to
+ *  carry a name rather than being decorative - and the same hover tooltip the
+ *  difficulty uses, so an icon is never left to explain itself.
+ */
+interface Props {
+  kind: Exclude<Kind, "hike">;
+}
+
+const LABELS: Record<Props["kind"], string> = {
+  trip: "Camping trip",
+  social: "Social event",
+};
+
+const { kind } = Astro.props;
+const label = LABELS[kind];
+---
+
+<span class="mark" role="img" aria-label={label} tabindex="0">
+  {
+    kind === "trip" ? (
+      <svg
+        class="mark__icon"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+      >
+        {/* Body with the doorway cut out of it, so the tent reads even when
+            it is a single flat colour. */}
+        <path
+          fill-rule="evenodd"
+          d="M12 5 L21.8 18 H2.2 Z M12 11 L15.9 18 H8.1 Z"
+        />
+        <path class="mark__poles" d="M9.3 7.2 L15.2 2 M14.7 7.2 L8.8 2" />
+      </svg>
+    ) : (
+      <svg
+        class="mark__icon"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+      >
+        {/* A kettle grill: lid, knob and legs. The knob is what stops the
+            silhouette reading as a plain circle. */}
+        <circle cx="12" cy="10.5" r="7.4" />
+        <circle cx="12" cy="2" r="1.5" />
+        <path
+          class="mark__legs"
+          d="M7.4 16.8 L5 22 M12 18 V22 M16.6 16.8 L19 22"
+        />
+      </svg>
+    )
+  }
+  <span class="mark__label caption" aria-hidden="true">{label}</span>
+</span>
+
+<style>
+  .mark {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    color: var(--tone-accent);
+  }
+
+  .mark__icon {
+    width: 1.15em;
+    height: 1.15em;
+    fill: currentColor;
+    flex: none;
+  }
+
+  /* Poles and legs are strokes rather than shapes: at this size a filled
+     sliver disappears, while a round-capped stroke holds its weight. */
+  .mark__poles,
+  .mark__legs {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  /* The same tooltip the difficulty uses, so the two marks in a row behave
+     identically. Right-aligned, because this one sits at the end of the row
+     and a left-aligned tooltip would hang off the edge. */
+  .mark__label {
+    position: absolute;
+    bottom: calc(100% + 0.45rem);
+    right: 0;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-pill);
+    background: var(--tone-fg);
+    color: var(--tone-bg);
+    white-space: nowrap;
+    opacity: 0;
+    translate: 0 0.25rem;
+    pointer-events: none;
+    transition:
+      opacity var(--duration-base) ease,
+      translate var(--duration-base) var(--ease-soft);
+  }
+
+  .mark:hover .mark__label,
+  .mark:focus-visible .mark__label {
+    opacity: 1;
+    translate: 0 0;
+  }
+</style>

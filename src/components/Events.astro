@@ -3,6 +3,7 @@ import { Picture } from "astro:assets";
 import { getCollection, getEntry } from "astro:content";
 import { links } from "../lib/links";
 import Difficulty from "./Difficulty.astro";
+import KindMark from "./KindMark.astro";
 import {
   clubToday,
   formatBadge,
@@ -83,9 +84,10 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
               {next.place} · {next.detail}
             </p>
 
-            {(next.difficulty || next.applyUrl) && (
+            {(next.difficulty || next.applyUrl || next.kind !== "hike") && (
               <p class="events__meta mt-4">
                 {next.difficulty && <Difficulty level={next.difficulty} />}
+                {next.kind !== "hike" && <KindMark kind={next.kind} />}
                 {next.applyUrl && (
                   <span class="events__flag">Application only</span>
                 )}
@@ -144,7 +146,9 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                         hard it is, and whether you have to apply. Wraps on a
                         narrow row, and pushes the apply link to the far edge
                         on a wide one. */}
-                    {(event.difficulty || event.applyUrl) && (
+                    {(event.difficulty ||
+                      event.applyUrl ||
+                      event.kind !== "hike") && (
                       <span class="events__meta mt-3">
                         {event.difficulty && (
                           <Difficulty level={event.difficulty} />
@@ -159,6 +163,11 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                             Apply
                             <span class="sr-only"> for {event.title}</span>
                           </a>
+                        )}
+                        {event.kind !== "hike" && (
+                          <span class="events__kind">
+                            <KindMark kind={event.kind} />
+                          </span>
                         )}
                       </span>
                     )}
@@ -343,6 +352,13 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
      the hiking entries, so the list can be scanned for hikes alone. */
   .events__row[data-kind="social"] .events__date {
     color: color-mix(in srgb, currentColor 55%, transparent);
+  }
+
+  /* Sits at the end of the row, past everything that qualifies the outing.
+     On a wrapper because scoped styles cannot reach inside a child component. */
+  .events__kind {
+    margin-inline-start: auto;
+    display: inline-flex;
   }
 
   .events__link {
