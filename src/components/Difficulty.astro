@@ -5,16 +5,13 @@ import {
   type Difficulty,
 } from "../lib/events";
 
-/** How hard a hike is, drawn as bootprints.
+/** How hard a hike is, drawn as mountains.
  *
  *  One icon repeated, one to five times, in a colour that runs green to red.
  *  Two signals carrying the same meaning: the count can be read precisely, the
- *  colour can be read at a glance, and neither depends on the other - which is
- *  what keeps the scale legible to anyone who cannot separate the hues.
- *
- *  Rating a trail in boots is the convention this borrows from, and it beats a
- *  row of neutral dots for the same reason a ridgeline did: it belongs to the
- *  thing being described.
+ *  colour can be read at a glance, and neither depends on the other - which
+ *  matters here, because red and green are exactly the pair most likely to be
+ *  indistinguishable, so the count has to stand on its own.
  *
  *  The label is a tooltip rather than standing text. It would otherwise repeat
  *  down the list and compete with the destinations, which are what the list is
@@ -26,7 +23,7 @@ interface Props {
 
 const { level } = Astro.props;
 const label = DIFFICULTY_LABELS[level];
-const prints = Array.from({ length: difficultyRank(level) }, (_, i) => i);
+const peaks = Array.from({ length: difficultyRank(level) });
 ---
 
 {
@@ -42,18 +39,17 @@ const prints = Array.from({ length: difficultyRank(level) }, (_, i) => i);
   tabindex="0"
 >
   {
-    prints.map((i) => (
+    peaks.map(() => (
       <svg
-        class="grade__print"
-        data-step={i % 2}
-        viewBox="0 0 16 20"
+        class="grade__peak"
+        viewBox="0 0 20 16"
         aria-hidden="true"
         focusable="false"
       >
-        {/* Sole and heel as two shapes: a single blob loses its footprint at
-            this size, the gap between them is what makes it read. */}
-        <ellipse cx="8" cy="6.4" rx="5.2" ry="6.2" />
-        <ellipse cx="8" cy="16.6" rx="3.9" ry="3.3" />
+        {/* A tall peak with a smaller one behind it. A lone triangle reads as
+            a triangle at this size; the second summit is what makes it a
+            mountain. Both sit on one baseline so a row of them is a range. */}
+        <path d="M0.5 15 L7 2.5 L13.5 15 Z M11.6 15 L15.6 7.4 L19.5 15 Z" />
       </svg>
     ))
   }
@@ -65,8 +61,8 @@ const prints = Array.from({ length: difficultyRank(level) }, (_, i) => i);
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 0.2em;
-    /* The ramp is selected once here and inherited by the prints below, so a
+    gap: 0.12em;
+    /* The ramp is selected once here and inherited by the peaks below, so a
        grade's colour is set in exactly one place. */
     color: var(--grade-ink);
   }
@@ -87,18 +83,12 @@ const prints = Array.from({ length: difficultyRank(level) }, (_, i) => i);
     --grade-ink: var(--color-grade-hard);
   }
 
-  /* Sized in em so the prints track whatever text sits beside them. */
-  .grade__print {
-    width: 0.72em;
-    height: 0.9em;
+  /* Sized in em so the range tracks whatever text sits beside it. */
+  .grade__peak {
+    width: 0.95em;
+    height: 0.76em;
     fill: currentColor;
     flex: none;
-  }
-
-  /* Alternating prints sit a touch lower, so a row of them reads as a track
-     across the ground rather than a row of identical marks. */
-  .grade__print[data-step="1"] {
-    translate: 0 0.16em;
   }
 
   /* A tooltip: the grade is supporting information, and printing it beside
