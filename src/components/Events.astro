@@ -146,9 +146,7 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                         hard it is, and whether you have to apply. Wraps on a
                         narrow row, and pushes the apply link to the far edge
                         on a wide one. */}
-                    {(event.difficulty ||
-                      event.applyUrl ||
-                      event.kind !== "hike") && (
+                    {(event.difficulty || event.applyUrl) && (
                       <span class="events__meta mt-3">
                         {event.difficulty && (
                           <Difficulty level={event.difficulty} />
@@ -164,14 +162,14 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
                             <span class="sr-only"> for {event.title}</span>
                           </a>
                         )}
-                        {event.kind !== "hike" && (
-                          <span class="events__kind">
-                            <KindMark kind={event.kind} />
-                          </span>
-                        )}
                       </span>
                     )}
                   </span>
+                  {event.kind !== "hike" && (
+                    <span class="events__kind">
+                      <KindMark kind={event.kind} />
+                    </span>
+                  )}
                 </li>
               );
             })}
@@ -287,6 +285,7 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
   }
 
   .events__row {
+    position: relative;
     grid-template-columns: 6rem minmax(0, 1fr);
     min-height: 7rem;
     padding-block: 1.25rem;
@@ -354,11 +353,26 @@ const { eventsPhoto, eventsPhotoAlt, eventsFocalPoint } = home!.data;
     color: color-mix(in srgb, currentColor 55%, transparent);
   }
 
-  /* Sits at the end of the row, past everything that qualifies the outing.
-     On a wrapper because scoped styles cannot reach inside a child component. */
+  /* Pinned to the row's right edge and centred on its full height. Absolute
+     rather than a third grid column, because a column would hold its gap open
+     on every hike row that has no mark. The wrapper exists so scoped styles
+     can reach it at all - they do not cross into a child component.
+
+     Sized by font-size because the mark is drawn in em, and muted from the
+     row's own colour so it reads as a marker rather than a second headline. */
   .events__kind {
-    margin-inline-start: auto;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    translate: 0 -50%;
     display: inline-flex;
+    font-size: 1.9rem;
+    color: color-mix(in srgb, currentColor 26%, transparent);
+  }
+
+  /* Only the rows that carry a mark reserve space for it. */
+  .events__row:not([data-kind="hike"]) {
+    padding-inline-end: 3.25rem;
   }
 
   .events__link {

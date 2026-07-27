@@ -9,9 +9,10 @@ import type { Kind } from "../lib/events";
  *  The tent carries crossed poles because a bare A-frame reads as a mountain
  *  at this size, and mountains already mean difficulty two columns to the left.
  *
- *  Since the mark is now the only thing distinguishing these entries, it has to
- *  carry a name rather than being decorative - and the same hover tooltip the
- *  difficulty uses, so an icon is never left to explain itself.
+ *  Since the mark is now the only thing distinguishing these entries, it carries
+ *  an accessible name rather than being decorative. It shows no tooltip: unlike
+ *  a difficulty grade there is nothing to look up, and a pill on every row would
+ *  fire as the eye travels down the list.
  */
 interface Props {
   kind: Exclude<Kind, "hike">;
@@ -26,7 +27,7 @@ const { kind } = Astro.props;
 const label = LABELS[kind];
 ---
 
-<span class="mark" role="img" aria-label={label} tabindex="0">
+<span class="mark" role="img" aria-label={label}>
   {
     kind === "trip" ? (
       <svg
@@ -61,15 +62,13 @@ const label = LABELS[kind];
       </svg>
     )
   }
-  <span class="mark__label caption" aria-hidden="true">{label}</span>
 </span>
 
 <style>
+  /* Colour is left to inherit so the caller decides how loud it is. */
   .mark {
-    position: relative;
     display: inline-flex;
     align-items: center;
-    color: var(--tone-accent);
   }
 
   .mark__icon {
@@ -87,31 +86,5 @@ const label = LABELS[kind];
     stroke: currentColor;
     stroke-width: 1.8;
     stroke-linecap: round;
-  }
-
-  /* The same tooltip the difficulty uses, so the two marks in a row behave
-     identically. Right-aligned, because this one sits at the end of the row
-     and a left-aligned tooltip would hang off the edge. */
-  .mark__label {
-    position: absolute;
-    bottom: calc(100% + 0.45rem);
-    right: 0;
-    padding: 0.3rem 0.6rem;
-    border-radius: var(--radius-pill);
-    background: var(--tone-fg);
-    color: var(--tone-bg);
-    white-space: nowrap;
-    opacity: 0;
-    translate: 0 0.25rem;
-    pointer-events: none;
-    transition:
-      opacity var(--duration-base) ease,
-      translate var(--duration-base) var(--ease-soft);
-  }
-
-  .mark:hover .mark__label,
-  .mark:focus-visible .mark__label {
-    opacity: 1;
-    translate: 0 0;
   }
 </style>

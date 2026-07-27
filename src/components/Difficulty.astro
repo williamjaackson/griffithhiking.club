@@ -97,14 +97,15 @@ const peaks = Array.from({ length: difficultyRank(level) });
   .grade__label {
     position: absolute;
     bottom: calc(100% + 0.45rem);
-    left: 0;
+    /* Centred over the icons rather than aligned to their first peak. */
+    left: 50%;
     padding: 0.3rem 0.6rem;
     border-radius: var(--radius-pill);
     background: var(--tone-fg);
     color: var(--tone-bg);
     white-space: nowrap;
     opacity: 0;
-    translate: 0 0.25rem;
+    translate: -50% 0.25rem;
     pointer-events: none;
     transition:
       opacity var(--duration-base) ease,
@@ -114,6 +115,6 @@ const peaks = Array.from({ length: difficultyRank(level) });
   .grade:hover .grade__label,
   .grade:focus-visible .grade__label {
     opacity: 1;
-    translate: 0 0;
+    translate: -50% 0;
   }
 </style>
