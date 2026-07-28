@@ -89,5 +89,8 @@ export const registrationErrors = (r: Registration, waived: Waived = {}) => ({
   phone: waived.phone ? null : phoneError(r.phone),
 });
 
+export const fullName = (r: Registration): string =>
+  `${r.firstName.trim()} ${r.lastName.trim()}`;
+
 export const isComplete = (r: Registration, waived: Waived = {}): boolean =>
   Object.values(registrationErrors(r, waived)).every((e) => e === null);

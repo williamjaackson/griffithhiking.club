@@ -15,8 +15,9 @@ import {
 /** The trail pass: four questions, then a code.
  *
  *  Everything happens in the browser. Nothing is sent anywhere and nothing is
- *  stored on a server - the code *is* the record, which is what lets a leader
- *  read it at a trailhead with no signal.
+ *  stored on a server - the code *is* the record, which is what lets a leader read
+ *  it at a trailhead with no signal. The code is a link to the club with the details
+ *  in its fragment; see lib/pass/link.ts for why the fragment and not the query.
  *
  *  Two steps on one route, because it is one task: the questions, then the pass.
  *  Giving the second a route of its own would put a back button in the middle of
@@ -129,9 +130,10 @@ import {
 
 <script>
   import QRCode from "qrcode";
-  import { encodePass, fullName } from "../lib/pass/payload";
+  import { passLink } from "../lib/pass/link";
   import {
     formatPhone,
+    fullName,
     isComplete,
     normalisePhone,
     normaliseStudentNumber,
@@ -309,20 +311,16 @@ import {
   };
 
   const makePass = async (registration: Registration) => {
-    const text = encodePass({
-      name: fullName(registration),
-      studentNumber: registration.studentNumber,
-      phone: registration.phone,
-    });
-
     // Colours come out of the token layer rather than being written again here.
     // The encoder wants hex, which is what those tokens already are.
     const token = (name: string) =>
       getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-    // Drawn from the fields every time rather than stored, so there is nothing
-    // that can fall out of step with what it says.
-    const url = await QRCode.toDataURL([{ data: text, mode: "alphanumeric" }], {
+    /* Drawn from the fields every time rather than stored, so there is nothing that
+     * can fall out of step with what it says. A link rather than a packed code, so a
+     * phone that is not a leader's is taken to the club instead of shown nonsense -
+     * which means byte mode now, not alphanumeric. */
+    const url = await QRCode.toDataURL(passLink(registration), {
       errorCorrectionLevel: "M",
       margin: 1,
       scale: 10,
