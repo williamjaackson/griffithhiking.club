@@ -1,5 +1,15 @@
 ---
-import Base from "../layouts/Base.astro";
+import Base from "../../layouts/Base.astro";
+
+// The styleguide is a working reference for whoever is building the site, not
+// something a visitor should ever land on. A rest route is what makes that
+// possible: getStaticPaths decides whether the page exists at all, so on a
+// production build nothing is emitted and the URL 404s like any other unknown
+// path. `slug` is always undefined, so the one page it can build is /styleguide.
+export function getStaticPaths() {
+  if (!import.meta.env.DEV) return [];
+  return [{ params: { slug: undefined } }];
+}
 
 // Token *names* only. The values live in src/styles/tokens.css and are read back
 // at runtime below, so a swatch label can never drift from the real value.
