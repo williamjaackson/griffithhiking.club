@@ -88,9 +88,26 @@ const { eyebrow, headline, photo, photoAlt, focalPoint, caption } = home;
     max-height: 56rem;
   }
 
-  /* object-position is set inline from the entry's focalPoint, because which
+  /* Overlapping the edge by a pixel on every side. At `inset: 0` the photo is
+     sized to a section whose width is often fractional, and the rounding leaves
+     a sliver of the olive tone showing down one edge - a green hairline against
+     the photograph. The hero clips, so the overlap costs nothing.
+
+     max-width has to be lifted for that to work. The base layer caps every
+     image at 100%, which clamps the width below straight back to the section's
+     own width; with `left` and `right` both at -1px and the width clamped, the
+     overlap lands entirely on the left and the right edge ends up a pixel
+     short - which is the side the hairline was on.
+
+     object-position is set inline from the entry's focalPoint, because which
      part of the photo to keep depends on the photo - so it belongs with the
      content, not here. */
+  .hero__photo {
+    inset: -1px;
+    max-width: none;
+    width: calc(100% + 2px);
+    height: calc(100% + 2px);
+  }
 
   /* Two layers, both derived from a token rather than literal colours:
      1. a vignette, pulling the corners down so the frame feels like a lens

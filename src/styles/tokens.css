@@ -35,6 +35,13 @@
   --color-grade-moderate-hard: #b85d28;
   --color-grade-hard: #c45245;
 
+  /* Something a hiker has left out. Deliberately not one of the grades above:
+   * those describe a hike, and a missing number is not a difficulty. Measured
+   * 5.49:1 on cream and 6.43:1 on white, so it clears AA wherever the trail pass
+   * puts it. Not for use on olive or ink - no red in this palette survives there,
+   * grade-hard included, which measures 1.46:1 on olive. */
+  --color-alert: #a8382c;
+
   /* ---- families ------------------------------------------------------ */
   /* Anton replaces Impact, which is absent on most Android and has
    * inconsistent metrics across platforms. */
@@ -110,6 +117,10 @@
   /* Flat surfaces: the join sheet and the rows inside it. */
   --radius-card: 0.875rem;
   --radius-organic: 50% 50% 0.5rem 0.5rem / 22% 22% 0.5rem 0.5rem;
+  /* A full-width sheet laid over another surface. Larger than a card's, because at
+   * a card's radius the corners of something screen-wide barely register - and the
+   * point of rounding them is to show the colour behind carrying on underneath. */
+  --radius-sheet: 1.5rem;
 
   /* ---- motion ---------------------------------------------------------
    * Removed earlier while nothing used them; back because the hero's call to
@@ -124,4 +135,15 @@
   --duration-slow: 600ms;
   /* First-paint arrival. Long enough to read as a rise rather than a flash. */
   --duration-entrance: 700ms;
+  /* The trail pass tab opening out to fill the screen. Longer than a control
+   * because it crosses the whole viewport; at control speed it reads as a
+   * flicker rather than something opening. */
+  --duration-zoom: 380ms;
+  /* How long the trail pass splash holds before it gives way to the form. Long
+   * enough to read the mark, short enough that it never becomes a wait. */
+  --duration-splash: 650ms;
+  /* The curtain shrinking back into the tab. Quicker than anything else here: on the
+   * way out the olive is arriving and wants to be watched, but on the way back the
+   * club is already behind it and the only job left is to get out of the way. */
+  --duration-reveal: 300ms;
 }

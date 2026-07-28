@@ -1,0 +1,222 @@
+---
+/** The olive curtain both directions of the trail pass travel behind.
+ *
+ *  Going out, the tab that was pressed grows into a field of olive that fills the
+ *  screen, and only then does the browser navigate. Coming back, the movement
+ *  happens on the far side instead: the club page arrives already covered, and the
+ *  curtain shrinks back down into the tab it came out of, uncovering the club
+ *  behind it. Out and back are one gesture played each way.
+ *
+ *  Because the tab is the same olive as the curtain, the last frame of the shrink
+ *  lands exactly on it, and the curtain becomes the tab again.
+ *
+ *  One component on both pages. `data-curtain="grow"` marks a link that opens the
+ *  pass, `data-curtain="shrink"` one that returns - so which way a link travels is
+ *  a decision in the markup, and the arriving page knows what to shrink into by
+ *  looking for the grow link it has.
+ *
+ *  Entirely additive: without JavaScript, or with reduced motion, these are
+ *  ordinary links and the navigation is an ordinary one.
+ */
+---
+
+{
+  /* Rendered rather than built in script, so its colour and its stacking stay in
+    the stylesheet with everything else and script only ever animates the clip. */
+}
+<div class="curtain" data-curtain-field aria-hidden="true"></div>
+
+<script>
+  import { CURTAIN_FLAG as FLAG } from "../lib/pass/curtain";
+
+  const field = document.querySelector<HTMLElement>("[data-curtain-field]");
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const style = (name: string) =>
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  const ms = (name: string) => Number.parseFloat(style(name));
+
+  /* Private browsing can refuse storage outright. A curtain that cannot be
+   * remembered is a navigation that simply does not animate, which is fine. */
+  const flag = {
+    set(way: string) {
+      try {
+        sessionStorage.setItem(FLAG, way);
+      } catch {
+        // Nothing to do: the far side will just not move a curtain.
+      }
+    },
+    /* Read and cleared together, so a stale flag can never sit waiting to fire on
+     * some unrelated navigation later on. */
+    take() {
+      try {
+        const way = sessionStorage.getItem(FLAG);
+        sessionStorage.removeItem(FLAG);
+        return way;
+      } catch {
+        return null;
+      }
+    },
+  };
+
+  const FULL = "inset(0px round 0px)";
+
+  /** The clip that covers exactly one element, in that element's own shape - so the
+   *  curtain grows out of a pill as a pill and out of the tab as the tab.
+   *
+   *  Measured against the curtain's own box rather than the window. An inset is
+   *  relative to the element being clipped, and on a phone the window is not the
+   *  same rectangle: innerHeight follows the visual viewport, which moves as the
+   *  address bar shows and hides, so the bottom inset came out wrong just when
+   *  somebody was scrolling. */
+  const clipTo = (el: Element) => {
+    const frame = field!.getBoundingClientRect();
+    const box = el.getBoundingClientRect();
+    const shape = getComputedStyle(el).borderRadius || style("--radius-card");
+    return (
+      `inset(${box.top - frame.top}px ${frame.right - box.right}px ` +
+      `${frame.bottom - box.bottom}px ${box.left - frame.left}px round ${shape})`
+    );
+  };
+
+  const play = (frames: Keyframe[], duration: number) =>
+    field!.animate(frames, {
+      duration,
+      easing: style("--ease-soft"),
+      fill: "forwards",
+    });
+
+  // ---- arriving -------------------------------------------------------------
+  const way = flag.take();
+
+  if (field && way && !still) {
+    /* Whatever opens the pass on this page is what the curtain shrinks back into -
+     * but only if it is actually on screen. There are two of them on the club page,
+     * the tab and the band's button, and the band's comes first in the document
+     * while sitting thousands of pixels down it: taking the first one collapsed the
+     * curtain into somewhere nobody could see. */
+    const home = [
+      ...document.querySelectorAll<HTMLElement>('a[data-curtain="grow"]'),
+    ].find((el) => {
+      const box = el.getBoundingClientRect();
+      return (
+        box.bottom > 0 &&
+        box.top < window.innerHeight &&
+        box.right > 0 &&
+        box.left < window.innerWidth
+      );
+    });
+
+    if (way === "shrink" && home) {
+      // Already covering everything: the head script saw the flag and marked the
+      // root before this page first painted.
+      const shrink = play(
+        [{ clipPath: FULL }, { clipPath: clipTo(home) }],
+        ms("--duration-reveal"),
+      );
+      void shrink.finished.then(() => {
+        /* Cancelled, not just un-marked: a forwards fill goes on holding the last
+         * frame, so dropping the covering mark alone left the curtain parked over
+         * the tab instead of back at its resting nothing. */
+        shrink.cancel();
+        document.documentElement.removeAttribute("data-curtain");
+      });
+    } else {
+      /* Nothing on screen to shrink into - the pass, which opens on its own splash.
+       * Clear it rather than leave it covering the page. */
+      document.documentElement.removeAttribute("data-curtain");
+      field.dataset.lifting = "";
+    }
+  }
+
+  // ---- leaving --------------------------------------------------------------
+  if (field && !still) {
+    for (const link of document.querySelectorAll<HTMLAnchorElement>(
+      "a[data-curtain]",
+    )) {
+      link.addEventListener("click", (event) => {
+        // Anything but a plain left click is the browser's business: a new tab, a
+        // new window, a saved link.
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+
+        const href = link.getAttribute("href");
+        if (!href) return;
+
+        event.preventDefault();
+        field.removeAttribute("data-lifting");
+
+        const way = link.dataset.curtain === "shrink" ? "shrink" : "grow";
+        flag.set(way);
+
+        if (way === "shrink") {
+          /* Covered at once rather than animated. The movement for this direction
+           * belongs on the far side, where there is something to uncover - and the
+           * pass is already this colour, so there is nothing to see here anyway.
+           * Two frames, because one is not always enough for the cover to paint. */
+          field.style.clipPath = "none";
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              window.location.href = href;
+            }),
+          );
+          return;
+        }
+
+        /* Grows from whatever was pressed, so the movement starts under the
+         * reader's finger rather than somewhere else on the screen. Navigating only
+         * once it has arrived is what joins the two pages up: the olive is already
+         * covering the screen by the time it happens. */
+        void play(
+          [{ clipPath: clipTo(link) }, { clipPath: FULL }],
+          ms("--duration-zoom"),
+        ).finished.then(() => {
+          window.location.href = href;
+        });
+      });
+    }
+  }
+</script>
+
+<style>
+  /* Clipped away to nothing at rest, so it costs a paint of nothing until it is
+     asked for. Above everything, including the tab it grows out of. */
+  .curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--color-olive);
+    pointer-events: none;
+    clip-path: inset(50%);
+  }
+
+  /* Covering, from the first paint. Set on the root by the inline script in the head
+     rather than here on the element, because the root is the only thing that exists
+     before the body is parsed. */
+  :root[data-curtain="shrink"] .curtain {
+    clip-path: none;
+  }
+
+  /* The fallback for a page with nothing to shrink into: full screen, then gone. */
+  .curtain[data-lifting] {
+    clip-path: none;
+    animation: curtain-lift var(--duration-slow) var(--ease-soft) both;
+  }
+
+  /* visibility, not opacity alone: once it has cleared it has to stop taking
+     pointer events, whatever the stacking says. */
+  @keyframes curtain-lift {
+    to {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+</style>

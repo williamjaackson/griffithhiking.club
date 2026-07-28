@@ -1,0 +1,105 @@
+---
+/** Option 3: a band of its own.
+ *
+ *  The most prominent of the four - a full-width strip in a contrasting tone -
+ *  at the cost of another section on a page that is already long.
+ */
+---
+
+<section class="band px-gutter" data-tone="sand" aria-labelledby="trail-pass">
+  <div class="band__inner mx-auto max-w-5xl">
+    <svg
+      class="band__icon"
+      viewBox="0 0 24 18"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="1" y="1" width="22" height="16" rx="2.5"></rect>
+      <path d="M1 6h22"></path>
+      <circle class="band__chip" cx="6.5" cy="11" r="1.6"></circle>
+      <path d="M11 10.5h8M11 13h5"></path>
+    </svg>
+
+    <div class="band__copy">
+      <h2 class="band__title font-display uppercase" id="trail-pass">
+        Get your trail pass
+      </h2>
+      <p class="text-body mt-2 opacity-75">
+        A trail pass is mandatory for entry to our hikes, and helps keep you
+        safe.
+      </p>
+    </div>
+
+    <a
+      class="band__cta rounded-pill px-control-inline py-control-block eyebrow"
+      href="/trail-pass"
+      data-curtain="grow"
+    >
+      Make mine
+    </a>
+  </div>
+</section>
+
+<style>
+  .band {
+    padding-block: clamp(2rem, 5vw, 3.25rem);
+  }
+
+  .band__inner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .band__icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+
+  .band__chip {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .band__copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Not olive, though it would match the button beside it: olive on sand measures
+     3.40:1, and the heading looked washed out against the band at that. The tone's
+     own foreground is 5.68:1, and the button carries the colour instead. */
+  .band__title {
+    margin: 0;
+    font-size: var(--text-title);
+    line-height: 1;
+  }
+
+  .band__cta {
+    flex: none;
+    /* The same colour as the heading beside it, read from the tone rather than
+       named again, so the pair can never drift apart. White on it rather than the
+       tone's own sand: the label is small and set in caps, and white is the only
+       thing that carries at that size. */
+    background: var(--tone-fg);
+    color: var(--color-white);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  @media (width < 40rem) {
+    .band__inner {
+      flex-wrap: wrap;
+    }
+
+    .band__cta {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
