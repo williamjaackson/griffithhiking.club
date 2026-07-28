@@ -1,0 +1,277 @@
+---
+import Base from "../layouts/Base.astro";
+import { Image } from "astro:assets";
+import clubLogo from "../assets/club-logo.png";
+
+/** The page that isn't there.
+ *
+ *  Astro serves this for any unmatched route: live in dev, and built to
+ *  404.html for the static host to hand back with the status code.
+ *
+ *  Olive, like the hero above it and the footer below it on the home page. The
+ *  root element is olive for the same reason, so a rubber-banded overscroll off
+ *  either end of this page shows the page rather than the edge of it.
+ *
+ *  No footer. What a 404 owes the reader is the way back, and a colophon under
+ *  it only adds things to read that are not that. Base makes the footer a named
+ *  slot precisely so a page can decline it - the styleguide does too.
+ */
+---
+
+<Base
+  title="Off the track — Griffith Hiking Club"
+  description="That page is not on the map. Head back to the trailhead."
+>
+  <section class="lost px-gutter" data-tone="olive">
+    {
+      /* Contour lines, as on a walking map. One shape reused at eight scales
+        rather than eight drawn paths: the rings then cannot drift out of family
+        with each other, and the whole backdrop costs a single path definition.
+        The stroke is non-scaling, so every ring is the same hairline weight
+        however far out it sits - a scaled stroke would make the outer rings read
+        as heavier contours instead of further ones. */
+    }
+    <svg
+      class="lost__topo"
+      viewBox="0 0 1200 800"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <defs>
+        <path
+          id="contour"
+          d="M104 4 C104.7 26.7 88.7 49 72 64 C55.3 79 26.3 93.7 4 94 C-18.3 94.3 -45 80.7 -62 66 C-79 51.3 -96.7 27.3 -98 6 C-99.3 -15.3 -86 -45 -70 -62 C-54 -79 -25 -94.3 -2 -96 C21 -97.7 50.3 -88.7 68 -72 C85.7 -55.3 103.3 -18.7 104 4 Z"
+        ></path>
+      </defs>
+      {
+        /* Centred off to the right and above the middle, so the rings sit behind
+          the headline's shoulder and clear the copy underneath it.
+
+          Each ring is turned as well as scaled. Scaled alone they nest
+          perfectly and read as ripples on water; rotating each one puts its
+          lumps somewhere else, which is what makes the set read as ground.
+          The turns stay well inside the gap between one scale and the next, so
+          no two contours can cross - and contours never cross. */
+      }
+      <g class="lost__rings" transform="translate(880 340)">
+        {
+          /* The number, set at the summit of the contours like a spot height on
+            a map. It lives inside the group rather than beside it so it cannot
+            drift off the peak at any viewport - the rings and the number are
+            positioned once, together. Desktop only: on a phone the slice fit
+            pushes this centre off the right-hand edge, and the eyebrow already
+            says plainly what happened. */
+        }
+        {
+          /* y offsets the baseline by half Anton's cap height, which is what
+            actually centres the digits on the peak. dominant-baseline would
+            centre the em box instead, and the em box is not where the ink is. */
+        }
+        <text class="lost__stamp" y="69" font-size="190">404</text>
+        <use href="#contour" transform="scale(0.5) rotate(0)" opacity="0.6"
+        ></use>
+        <use href="#contour" transform="scale(0.9) rotate(37)" opacity="0.54"
+        ></use>
+        <use href="#contour" transform="scale(1.35) rotate(-24)" opacity="0.48"
+        ></use>
+        <use href="#contour" transform="scale(1.85) rotate(58)" opacity="0.41"
+        ></use>
+        <use href="#contour" transform="scale(2.4) rotate(-46)" opacity="0.34"
+        ></use>
+        <use href="#contour" transform="scale(3) rotate(82)" opacity="0.27"
+        ></use>
+        <use href="#contour" transform="scale(3.7) rotate(-68)" opacity="0.2"
+        ></use>
+        <use href="#contour" transform="scale(4.5) rotate(105)" opacity="0.13"
+        ></use>
+      </g>
+    </svg>
+
+    {
+      /* The mark sits where it sits on the hero, and goes where it goes there.
+        Landing on a 404 should still look like landing on this club's site. */
+    }
+    <a class="lost__home top-gutter-block left-gutter absolute" href="/">
+      <Image
+        class="lost__mark aspect-square h-auto rounded-full object-cover mix-blend-screen"
+        src={clubLogo}
+        alt="Griffith Hiking Club"
+        width={180}
+        height={180}
+        loading="eager"
+      />
+    </a>
+
+    <div class="lost__inner">
+      {
+        /* Says what happened before anything else does. The headline is the
+          club's way of saying it; this is the plain version, and it comes
+          first because a reader who has landed here by mistake needs the fact,
+          not the joke. */
+      }
+      <p class="eyebrow" style="color: var(--tone-accent)">
+        Error 404: page not found
+      </p>
+
+      <h1 class="lost__headline text-hero font-display mt-7 uppercase">
+        Off the<br />track.
+      </h1>
+
+      <p class="lost__lead font-serif text-lead mt-7">
+        There is no page at this address. The link may be out of date, or the
+        address may have a typo in it.
+      </p>
+
+      {
+        /* One way out, and only one. A second link beside it would make the
+          reader choose, and a reader who is here did not mean to be here. */
+      }
+      <div class="lost__actions mt-10">
+        <a
+          class="lost__cta gap-control-gap px-control-inline py-control-block rounded-pill bg-cream text-olive-dark eyebrow inline-flex items-center whitespace-nowrap"
+          href="/"
+        >
+          <svg
+            class="lost__arrow"
+            viewBox="0 0 20 20"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M16.5 10h-13M9 4.5 3.5 10 9 15.5"></path>
+          </svg>
+          Go home
+        </a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Fills the viewport and centres in it, so the page reads as a destination
+     rather than as a short page that failed to load the rest of itself.
+     svh tracks the visible viewport on mobile; the floor keeps the headline off
+     the mark and the actions off the bottom edge on a short laptop. */
+  .lost {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 100svh;
+    padding-block: calc(var(--spacing-gutter-block) * 3);
+    display: grid;
+    align-content: center;
+  }
+
+  .lost__topo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    /* Quieter on a phone, where the slice fit zooms the rings and they would
+       otherwise cross the copy at full strength. */
+    opacity: 0.55;
+  }
+
+  @media (width >= 52rem) {
+    .lost__topo {
+      opacity: 1;
+    }
+  }
+
+  .lost__rings {
+    fill: none;
+    stroke: var(--tone-accent);
+    stroke-width: 1.25;
+    /* Hairlines at every scale. Without this the outermost ring is drawn 4.5x
+       thicker than the innermost and the set stops reading as a contour map. */
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* Filled rather than stroked, so it sits in the contours as a mass instead of
+     joining them as another line. Kept dim: it is the loudest shape on the page
+     by size, and it is not the thing to read first. */
+  .lost__stamp {
+    display: none;
+    fill: var(--tone-accent);
+    stroke: none;
+    font-family: var(--font-display);
+    text-anchor: middle;
+    opacity: 0.22;
+  }
+
+  @media (width >= 52rem) {
+    .lost__stamp {
+      display: block;
+    }
+  }
+
+  .lost__mark {
+    width: clamp(3.75rem, 3.25rem + 2vw, 5.5rem);
+  }
+
+  /* Caps have no descenders, so the token's 0.82 leading - calibrated for mixed
+     case - reads loose here. Matched to the hero's correction. */
+  .lost__headline {
+    line-height: 0.78;
+  }
+
+  .lost__lead {
+    /* The measure the two sentences want. Wider and the second one strands a
+       single word; narrower and it breaks into four ragged lines. */
+    max-width: 32ch;
+    opacity: 0.85;
+  }
+
+  .lost__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem 2rem;
+  }
+
+  /* The hero's pill, with the same lift and the same shadow: the way back should
+     look like the way in. */
+  .lost__cta {
+    box-shadow: 0 0.9rem 2.2rem
+      color-mix(in srgb, var(--color-ink) 34%, transparent);
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      box-shadow var(--duration-base) ease,
+      background-color var(--duration-base) ease;
+  }
+
+  .lost__cta:hover {
+    transform: translateY(-2px);
+    background-color: var(--color-white);
+    box-shadow: 0 1.3rem 2.9rem
+      color-mix(in srgb, var(--color-ink) 42%, transparent);
+  }
+
+  .lost__cta:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  .lost__arrow {
+    width: 1.1em;
+    height: 1.1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--duration-base) var(--ease-soft);
+  }
+
+  /* Leftward, away from the label. The hero's arrow leads out to the join page;
+     this one points back the way the reader came. */
+  .lost__cta:hover .lost__arrow {
+    transform: translateX(-3px);
+  }
+
+  /* No entrance animation, unlike the hero. The hero is arrived at on purpose
+     and can afford to unfold; this page is arrived at by mistake, and staging
+     the way out behind half a second of movement only delays the reader.
+     The pill still responds to hover and press - that is feedback, not
+     decoration. */
+</style>
