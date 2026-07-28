@@ -44,7 +44,10 @@ import {
       height={260}
       loading="eager"
     />
-    <p class="opening__word text-hero font-display uppercase">Trail pass</p>
+    <p class="opening__word text-hero font-display uppercase">
+      <span>Trail</span>
+      <span>pass</span>
+    </p>
   </Curtain>
 
   <section class="pass px-gutter" data-tone="olive" data-step="form">
@@ -397,10 +400,39 @@ import {
   }
 
   .opening__word {
-    max-width: 8ch;
     margin: 0;
     line-height: 0.78;
     text-align: center;
+  }
+
+  /* Two lines, always, because they are two blocks rather than one line left to
+     wrap. The break used to come from a max-width in ch, and a ch is measured in
+     whichever font happens to be loaded - so the wordmark sat on two lines in the
+     fallback face and snapped to one the moment Anton arrived. */
+  .opening__word span {
+    display: block;
+  }
+
+  /* Three beats, the way the hero arrives: the mark, then each line. Both are done
+     well inside the hold, so the whole of it is read before the curtain lifts. */
+  .opening__mark,
+  .opening__word span {
+    animation: opening-rise var(--duration-base) var(--ease-soft) both;
+  }
+
+  .opening__word span:first-child {
+    animation-delay: 110ms;
+  }
+
+  .opening__word span:last-child {
+    animation-delay: 200ms;
+  }
+
+  @keyframes opening-rise {
+    from {
+      opacity: 0;
+      translate: 0 0.7rem;
+    }
   }
 
   /* ---- page ------------------------------------------------------------ */
