@@ -1,0 +1,574 @@
+---
+import Base from "../layouts/Base.astro";
+import { Image } from "astro:assets";
+import clubLogo from "../assets/club-logo.png";
+import Curtain from "../components/Curtain.astro";
+import PassCard from "../components/PassCard.astro";
+import PassField from "../components/PassField.astro";
+import {
+  PHONE_EXAMPLE,
+  PHONE_HINT,
+  STUDENT_NUMBER_EXAMPLE,
+  STUDENT_NUMBER_HINT,
+} from "../lib/pass/validation";
+
+/** The trail pass: four questions, then a code.
+ *
+ *  Everything happens in the browser. Nothing is sent anywhere and nothing is
+ *  stored on a server - the code *is* the record, which is what lets a leader read
+ *  it at a trailhead with no signal. The code is a link to the club with the details
+ *  in its fragment; see lib/pass/link.ts for why the fragment and not the query.
+ *
+ *  Two steps on one route, because it is one task: the questions, then the pass.
+ *  Giving the second a route of its own would put a back button in the middle of
+ *  filling in a form.
+ */
+---
+
+<Base
+  title="Trail pass · Griffith Hiking Club"
+  description="Make a QR trail pass to show at the trailhead."
+  surface="olive"
+>
+  {
+    /* What the curtain carries while it covers this page. The tab grows into an olive
+      field on the way here and this arrives inside the same field, so the mark and
+      the name ride on the colour that was already there rather than on a second
+      overlay of their own. */
+  }
+  <Curtain opening>
+    <Image
+      class="opening__mark"
+      src={clubLogo}
+      alt=""
+      width={260}
+      height={260}
+      loading="eager"
+    />
+    <p class="opening__word text-hero font-display uppercase">
+      <span>Trail</span>
+      <span>pass</span>
+    </p>
+  </Curtain>
+
+  <section class="pass px-gutter" data-tone="olive" data-step="form">
+    <div class="pass__inner mx-auto">
+      {
+        /* The pitch. Gone once there is a pass: a screenshot should not have to be
+          cropped around the thing that got you here. */
+      }
+      <div class="pass__intro">
+        <a class="pass__back caption" href="/" data-curtain="shrink"
+          >← Back to the club</a
+        >
+
+        <h1 class="pass__title font-display mt-6 uppercase">Your trail pass</h1>
+
+        <p class="text-lead font-serif mt-6">
+          We use your trail pass to keep you safe. Bring it to every hike to
+          check in and check out.
+        </p>
+      </div>
+
+      {
+        /* One panel, three contents. The panel keeps its place between steps, so
+          the flow reads as one thing being filled in rather than three screens. */
+      }
+      <div class="panel" data-tone="cream">
+        <form class="step" id="form" novalidate>
+          <div class="fields">
+            <PassField
+              name="first"
+              label="What is your first name?"
+              autocomplete="given-name"
+              required
+            />
+            <PassField
+              name="last"
+              label="What is your last name?"
+              autocomplete="family-name"
+              required
+            />
+            <PassField
+              name="student"
+              label="What is your student number?"
+              hint={STUDENT_NUMBER_HINT}
+              prefix="s"
+              placeholder={STUDENT_NUMBER_EXAMPLE}
+              inputmode="numeric"
+              maxlength={7}
+              waive={{
+                name: "no-student",
+                label: "I’m not a current Griffith student",
+              }}
+            />
+            <PassField
+              name="phone"
+              label="What is your phone number?"
+              hint={PHONE_HINT}
+              placeholder={PHONE_EXAMPLE}
+              inputmode="tel"
+              autocomplete="tel"
+              maxlength={12}
+              waive={{
+                name: "no-phone",
+                label: "I don’t have an Australian mobile number",
+              }}
+            />
+          </div>
+
+          <button class="submit rounded-pill mt-9" type="submit"
+            >Continue</button
+          >
+        </form>
+      </div>
+    </div>
+
+    <PassCard />
+  </section>
+</Base>
+
+<script>
+  import QRCode from "qrcode";
+  import { passLink } from "../lib/pass/link";
+  import {
+    formatPhone,
+    fullName,
+    isComplete,
+    normalisePhone,
+    normaliseStudentNumber,
+    registrationErrors,
+    type Registration,
+    type Waived,
+  } from "../lib/pass/validation";
+
+  const section = document.querySelector<HTMLElement>(".pass")!;
+  const form = document.getElementById("form") as HTMLFormElement;
+  const ticket = document.getElementById("ticket")!;
+
+  const field = (name: string) =>
+    section.querySelector<HTMLInputElement>(`[name="${name}"]`)!;
+
+  /** Input name paired with the error it reports, so validation, display and
+   *  focus all walk one list rather than three copies of it. */
+  const FIELDS = [
+    ["first", "firstName"],
+    ["last", "lastName"],
+    ["student", "studentNumber"],
+    ["phone", "phone"],
+  ] as const;
+
+  /** The two fields a hiker may genuinely not have: the checkbox that waives it,
+   *  the input it waives, and the error it stops reporting. */
+  const OPTIONAL = [
+    { box: "no-student", input: "student", key: "studentNumber" },
+    { box: "no-phone", input: "phone", key: "phone" },
+  ] as const;
+
+  type Step = "form" | "pass";
+
+  const show = (step: Step) => {
+    section.dataset.step = step;
+    form.hidden = step !== "form";
+    ticket.hidden = step !== "pass";
+    window.scrollTo({ top: 0 });
+  };
+
+  /** Kept on the device so a pass made once is a pass you already have: the next
+   *  visit opens straight onto it rather than asking the same four questions
+   *  again. It is the same record the code is built from, which is why it is only
+   *  ever read back through the validator - a stored record that no longer passes
+   *  is treated as absent rather than turned into a pass nobody can use. */
+  const KEY = "griffith-hiking-club:trail-pass";
+
+  type Stored = Registration & { waived: Waived };
+
+  const remember = (registration: Registration, waived: Waived) => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ ...registration, waived }));
+    } catch {
+      // Private browsing, or a full quota. The pass still works for this visit;
+      // it just will not be waiting next time.
+    }
+  };
+
+  const recall = (): Stored | null => {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return null;
+      const stored = JSON.parse(raw) as Stored;
+      return isComplete(stored, stored.waived ?? {}) ? stored : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const waived = (): Waived =>
+    Object.fromEntries(
+      OPTIONAL.map(({ box, key }) => [key, field(box).checked]),
+    );
+
+  const error = (name: string, message: string | null) => {
+    const box = field(name).closest(".field")!;
+    box.querySelector("[data-error]")!.textContent = message ?? "";
+    field(name).setAttribute("aria-invalid", message ? "true" : "false");
+  };
+
+  /** Ticking an opt-out takes the field out of play: emptied, disabled and
+   *  visibly off, so it cannot hold a half-typed value that never gets used. */
+  const syncOptional = () => {
+    for (const { box, input } of OPTIONAL) {
+      const off = field(box).checked;
+      const target = field(input);
+      target.disabled = off;
+      if (off) {
+        target.value = "";
+        error(input, null);
+      }
+      target.closest(".field")!.classList.toggle("field--off", off);
+    }
+  };
+
+  for (const { box } of OPTIONAL) {
+    field(box).addEventListener("change", syncOptional);
+  }
+
+  /** The phone is grouped as it is typed and both numbers refuse anything that is
+   *  not a digit - the format is enforced rather than explained twice. */
+  field("phone").addEventListener("input", (event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    input.value = formatPhone(normalisePhone(input.value).replace(/\D/g, ""));
+  });
+
+  field("student").addEventListener("input", (event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    input.value = input.value.replace(/\D/g, "").slice(0, 7);
+  });
+
+  const read = (): Registration => {
+    const student = field("student").value.trim();
+    const phone = field("phone").value.trim();
+    return {
+      firstName: field("first").value,
+      lastName: field("last").value,
+      // An empty box stays empty rather than becoming the letter s on its own, so
+      // an untouched field reports as missing instead of as the wrong length.
+      studentNumber: student ? normaliseStudentNumber(`s${student}`) : "",
+      phone: phone ? normalisePhone(phone) : "",
+    };
+  };
+
+  /** One size for every name, and only a name too long for the measure comes down
+   *  from it - the one thing on this pass that has to be measured rather than
+   *  declared, because a stylesheet cannot count characters. Steps down off the
+   *  stylesheet's own starting size, so the size lives in the CSS and this only ever
+   *  reduces it. */
+  const fitName = (el: HTMLElement) => {
+    const root = Number.parseFloat(
+      getComputedStyle(document.documentElement).fontSize,
+    );
+
+    el.style.fontSize = "";
+    el.style.whiteSpace = "nowrap";
+
+    const start = Number.parseFloat(getComputedStyle(el).fontSize);
+
+    /* The room the text actually has is the content box, not clientWidth - that
+     * includes the padding holding the name clear of the tool at the corner.
+     * Measuring against the wrong one stopped the shrinking while the line was
+     * still wider than the box it sits in, and a line wider than its box cannot be
+     * centred in it: that was the name drifting right on a phone. */
+    const room = () => {
+      const box = getComputedStyle(el);
+      return (
+        el.clientWidth -
+        Number.parseFloat(box.paddingLeft) -
+        Number.parseFloat(box.paddingRight)
+      );
+    };
+
+    const width = () => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return range.getBoundingClientRect().width;
+    };
+
+    const smallest = start * 0.6;
+    let size = start;
+
+    while (size > smallest && width() > room()) {
+      size -= 1;
+      el.style.fontSize = `${size / root}rem`;
+    }
+
+    /* A name too long for one line even at the smallest size wraps instead - and
+     * does it at a size worth reading rather than the one it happened to stop
+     * shrinking at. */
+    if (width() > room()) {
+      el.style.fontSize = `${(start * 0.72) / root}rem`;
+      el.style.whiteSpace = "normal";
+    }
+  };
+
+  const makePass = async (registration: Registration) => {
+    // Colours come out of the token layer rather than being written again here.
+    // The encoder wants hex, which is what those tokens already are.
+    const token = (name: string) =>
+      getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    /* Drawn from the fields every time rather than stored, so there is nothing that
+     * can fall out of step with what it says. A link rather than a packed code, so a
+     * phone that is not a leader's is taken to the club instead of shown nonsense -
+     * which means byte mode now, not alphanumeric. */
+    const url = await QRCode.toDataURL(passLink(registration), {
+      errorCorrectionLevel: "M",
+      margin: 1,
+      scale: 10,
+      color: { dark: token("--color-black"), light: token("--color-white") },
+    });
+
+    ticket.querySelector<HTMLImageElement>("[data-code]")!.src = url;
+    const name = ticket.querySelector<HTMLElement>("[data-name]")!;
+    name.textContent = fullName(registration);
+
+    // Absent numbers are written on the pass rather than left blank, so a leader
+    // reading it can tell a gap from something they have not spotted.
+    const cell = (slot: string, value: string) => {
+      const el = ticket.querySelector<HTMLElement>(`[data-${slot}]`)!;
+      el.textContent = value || "Not provided";
+      // The label goes with it, so the whole cell reads as the gap rather than
+      // just the line where the number should have been.
+      el.closest(".cell")!.classList.toggle("cell--absent", !value);
+    };
+
+    cell("student", registration.studentNumber);
+    cell("phone", registration.phone ? formatPhone(registration.phone) : "");
+
+    show("pass");
+    fitName(name);
+  };
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const registration = read();
+    const skipped = waived();
+    const errors = registrationErrors(registration, skipped);
+
+    for (const [name, key] of FIELDS) error(name, errors[key]);
+
+    const wrong = FIELDS.find(([, key]) => errors[key] !== null);
+    if (wrong) {
+      field(wrong[0]).focus();
+      return;
+    }
+
+    remember(registration, skipped);
+    void makePass(registration);
+  });
+
+  ticket
+    .querySelector("[data-again]")!
+    .addEventListener("click", () => show("form"));
+
+  /* Anything remembered goes back into the fields as well as onto the pass, so
+   * Change details opens on what was typed rather than on an empty form. */
+  const stored = recall();
+  if (stored) {
+    field("first").value = stored.firstName;
+    field("last").value = stored.lastName;
+    field("student").value = stored.studentNumber.replace(/^s/, "");
+    field("phone").value = formatPhone(stored.phone);
+    field("no-student").checked = Boolean(stored.waived?.studentNumber);
+    field("no-phone").checked = Boolean(stored.waived?.phone);
+    syncOptional();
+
+    void makePass(stored);
+  }
+</script>
+
+<style>
+  /* ---- the opening ----------------------------------------------------- */
+  /* Rides on the curtain, which does the covering and the clearing - so this is
+     only ever the two things printed on it. */
+  .opening__mark {
+    width: clamp(6rem, 20vw, 8.5rem);
+    height: auto;
+    border-radius: 50%;
+  }
+
+  .opening__word {
+    margin: 0;
+    line-height: 0.78;
+    text-align: center;
+  }
+
+  /* Two lines, always, because they are two blocks rather than one line left to
+     wrap. The break used to come from a max-width in ch, and a ch is measured in
+     whichever font happens to be loaded - so the wordmark sat on two lines in the
+     fallback face and snapped to one the moment Anton arrived. */
+  .opening__word span {
+    display: block;
+  }
+
+  /* Three beats, the way the hero arrives: the mark, then each line. Both are done
+     well inside the hold, so the whole of it is read before the curtain lifts. */
+  .opening__mark,
+  .opening__word span {
+    animation: opening-rise var(--duration-base) var(--ease-soft) both;
+  }
+
+  .opening__word span:first-child {
+    animation-delay: 110ms;
+  }
+
+  .opening__word span:last-child {
+    animation-delay: 200ms;
+  }
+
+  @keyframes opening-rise {
+    from {
+      opacity: 0;
+      translate: 0 0.7rem;
+    }
+  }
+
+  /* ---- page ------------------------------------------------------------ */
+  .pass {
+    /* How wide a pass is, and how far the card is held off the edges of a phone.
+       Named because four rules depend on it and they have to agree: the form column,
+       the pass measure, the card's cap and its margin. */
+    --measure: 27rem;
+    --inset: 0.9rem;
+
+    min-height: 100svh;
+    padding-block: var(--spacing-gutter-block);
+    display: grid;
+    align-content: center;
+  }
+
+  .pass__inner {
+    width: 100%;
+    max-width: 62rem;
+    display: grid;
+    gap: clamp(1.75rem, 5vw, var(--spacing-gutter));
+  }
+
+  /* Two columns from the point there is room for both: what this is on the left,
+     what you fill in on the right.
+     The block itself stays centred on the page. Inside it the pitch is centred in
+     the upper of two bands, two thirds against one, which puts the middle of the
+     pitch a third of the way down the panel rather than halfway - higher than the
+     centre without being pinned to the top of it. */
+  @media (width >= 58rem) {
+    .pass__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, var(--measure));
+      grid-template-rows: 2fr 1fr;
+      /* No row gap: the bands are a measuring device rather than a division, and a
+         gap between them would move the third they mark. */
+      row-gap: 0;
+    }
+
+    /* Spans both bands, so the panel is what sets the height that the third is a
+       third of. */
+    .panel {
+      grid-row: 1 / -1;
+    }
+
+    .pass__intro {
+      grid-row: 1;
+      align-self: center;
+    }
+  }
+
+  /* Once there is a pass, the whole form side goes: the pass is the page. */
+  .pass[data-step="pass"] .pass__inner {
+    display: none;
+  }
+
+  /* The same target size as the one on the pass. Pulled back by its own padding so
+     the text still starts on the measure's edge rather than looking indented. */
+  .pass__back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-inline-start: -0.75rem;
+    padding-inline: 0.75rem;
+    opacity: 0.7;
+    transition: opacity var(--duration-base) ease;
+  }
+
+  .pass__back:hover {
+    opacity: 1;
+  }
+
+  /* The heading is measured against this column rather than the viewport, so it
+     can be told to fit it. */
+  .pass__intro {
+    container-type: inline-size;
+  }
+
+  /* Whichever is smaller: the size the scale asks for, or the size at which the
+     heading still fits its column on one line. 14cqi is taken from "YOUR TRAIL
+     PASS" set in Anton caps, which is the whole of this heading - so on a narrow
+     screen the scale wins and on a wide one the column does, and it never wraps
+     in either. */
+  .pass__title {
+    font-size: min(var(--text-section), 14cqi);
+    line-height: var(--text-section--line-height);
+    letter-spacing: var(--text-section--letter-spacing);
+  }
+
+  /* No margin reset here: preflight already zeroes it, and an unlayered scoped
+     rule would beat the mt-* utility that sets the spacing. */
+
+  /* ---- panel ----------------------------------------------------------- */
+  .panel {
+    border-radius: var(--radius-card);
+    padding: clamp(1.35rem, 4vw, 2rem);
+    box-shadow: 0 1.25rem 3.5rem
+      color-mix(in srgb, var(--color-ink) 30%, transparent);
+  }
+
+  /* One column, whatever the room: the labels are whole questions, and two side by
+     side wrap every one of them. */
+  .fields {
+    display: grid;
+    gap: clamp(1.1rem, 3svh, 1.5rem);
+  }
+
+  /* ---- actions --------------------------------------------------------- */
+  /* Full width: there is one thing to do on this panel. */
+  .submit {
+    width: 100%;
+    padding: var(--spacing-control-block) var(--spacing-control-inline);
+    border: 0;
+    background: var(--color-olive-dark);
+    color: var(--color-cream);
+    font-family: inherit;
+    font-size: var(--text-eyebrow);
+    font-weight: 800;
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      background-color var(--duration-base) ease;
+  }
+
+  .submit:hover {
+    transform: translateY(-2px);
+    background: var(--color-olive);
+  }
+
+  .submit:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  /* The pass takes the whole screen once it exists, gutters included - its own
+     bands decide where their edges are. See PassCard for the rest. */
+  .pass[data-step="pass"] {
+    padding: 0;
+    align-content: stretch;
+  }
+</style>

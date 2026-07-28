@@ -1,0 +1,98 @@
+---
+/** A tab fixed to the edge of the page.
+ *
+ *  Pinned rather than in the flow, because signing on happens at a trailhead and
+ *  should not need somebody to find their place in the page first. On the edge
+ *  and vertically centred rather than in a corner: the hero already keeps its
+ *  Join the club pinned bottom right, and the two collided.
+ *
+ *  Reads vertically, which the hero's photo credit already does - so it belongs
+ *  to the site rather than looking bolted on.
+ */
+---
+
+<a class="tab" href="/trail-pass" data-curtain="grow">
+  <svg
+    class="tab__icon"
+    viewBox="0 0 24 18"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <rect x="1" y="1" width="22" height="16" rx="2.5"></rect>
+    <path d="M1 6h22"></path>
+    <circle class="tab__chip" cx="6.5" cy="11" r="1.6"></circle>
+    <path d="M11 10.5h8M11 13h5"></path>
+  </svg>
+  <span class="tab__label eyebrow">Trail pass</span>
+</a>
+
+<style>
+  .tab {
+    position: fixed;
+    right: 0;
+    /* A quarter down rather than halfway: at the midpoint it sat across the
+       hero's headline, and this is nearer where a thumb reaches anyway. */
+    top: 25%;
+    translate: 0 -50%;
+    z-index: 30;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.95rem 0.55rem 1.05rem;
+
+    /* The same olive as the trail pass page, so the tab is already the colour of
+       the thing it opens - the field it grows into is a continuation of it rather
+       than a second colour appearing. */
+    background: var(--color-olive);
+    color: var(--color-cream);
+    text-decoration: none;
+    /* Rounded on the page side only, so it reads as attached to the edge rather
+       than floating near it. */
+    border-radius: var(--radius-card) 0 0 var(--radius-card);
+    box-shadow: -0.35rem 0 1.6rem
+      color-mix(in srgb, var(--color-ink) 28%, transparent);
+
+    transition:
+      translate var(--duration-base) var(--ease-soft),
+      padding-right var(--duration-base) var(--ease-soft);
+  }
+
+  /* Leans out of the edge when reached for. */
+  .tab:hover,
+  .tab:focus-visible {
+    padding-right: 0.9rem;
+  }
+
+  .tab__icon {
+    width: 1.2rem;
+    height: 1.2rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+  }
+
+  .tab__chip {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .tab__label {
+    writing-mode: vertical-rl;
+    letter-spacing: 0.18em;
+  }
+
+  /* On a short screen the label costs more than it earns. */
+  @media (height < 34rem) {
+    .tab__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+  }
+</style>

@@ -59,12 +59,19 @@
     background-color: var(--color-olive);
   }
 
+  /* The default. A page whose own surface is a different colour says so through
+   * Base's `surface` prop, which is what iOS Safari samples to tint its chrome -
+   * see the note on that prop. */
   body {
     background-color: var(--color-cream);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
+  }
+
+  body[data-surface="olive"] {
+    background-color: var(--color-olive);
   }
 
   /* Sizes come from the scale, so headings inherit weight rather than

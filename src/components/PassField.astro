@@ -1,0 +1,236 @@
+---
+/** One question on the trail pass form.
+ *
+ *  The label is the question, the hint states the rule before it can be got
+ *  wrong, and the error is the correction. Every field carries all three slots so
+ *  the column keeps its rhythm whether a given field uses them or not.
+ *
+ *  `waive` is the opt-out for the two fields somebody may genuinely not have. It
+ *  belongs to the field rather than sitting loose beneath it, because it is the
+ *  answer to the same question.
+ */
+interface Props {
+  name: string;
+  label: string;
+  hint?: string;
+  /** A fixed character inside the box, e.g. the s on a student number. */
+  prefix?: string;
+  required?: boolean;
+  inputmode?: "numeric" | "tel";
+  maxlength?: number;
+  placeholder?: string;
+  autocomplete?: string;
+  waive?: { name: string; label: string };
+}
+
+// `required` is deliberately left in the spread rather than pulled out: it belongs
+// on the input, where a screen reader announces it. There is no asterisk - a form
+// of four questions where two are optional says so on the two, not on the others.
+const { name, label, hint, prefix, waive, ...input } = Astro.props;
+
+const hintId = hint ? `${name}-hint` : undefined;
+const errorId = `${name}-error`;
+---
+
+<div class="field">
+  <label class="field__label" for={name}>{label}</label>
+
+  {
+    hint && (
+      <p class="field__hint" id={hintId}>
+        {hint}
+      </p>
+    )
+  }
+
+  {
+    /* One box, whether or not there is a prefix. The box carries the border and the
+      spacing and the input is transparent inside it - rendering the input twice, once
+      bare and once wrapped, meant undoing the bare styling again with !important. */
+  }
+  <span class="field__box">
+    {
+      prefix && (
+        <span class="field__prefix" aria-hidden="true">
+          {prefix}
+        </span>
+      )
+    }
+    <input
+      id={name}
+      name={name}
+      aria-describedby={[hintId, errorId].filter(Boolean).join(" ")}
+      {...input}
+    />
+  </span>
+
+  <p class="field__error" id={errorId} data-error></p>
+
+  {
+    waive && (
+      <label class="waive">
+        <input type="checkbox" name={waive.name} />
+        <span>{waive.label}</span>
+      </label>
+    )
+  }
+</div>
+
+<style>
+  .field {
+    display: grid;
+    /* Nothing between the label, hint, box and error: each sets its own spacing,
+       so an unused slot collapses rather than leaving a gap. */
+    align-content: start;
+  }
+
+  /* The questions are the page's voice, so they are set in the serif the way every
+     other piece of writing on this site is. A whole page of sans was the only thing
+     here that did not look like the club. */
+  .field__label {
+    font-family: var(--font-serif);
+    font-size: var(--text-lead);
+    font-weight: 500;
+    line-height: 1.25;
+  }
+
+  .field__hint {
+    margin: 0.3rem 0 0;
+    font-size: var(--text-eyebrow);
+    line-height: 1.45;
+    opacity: 0.65;
+  }
+
+  .field__box {
+    display: flex;
+    align-items: center;
+    margin-top: 0.55rem;
+    background: color-mix(in srgb, var(--tone-fg) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--tone-fg) 22%, transparent);
+    border-radius: var(--radius-card);
+    transition: border-color var(--duration-base) ease;
+  }
+
+  .field__prefix {
+    padding-left: 0.9rem;
+    /* Matches the input's own size, so the s and the digits sit on one line. */
+    font-size: max(1rem, var(--text-body));
+    opacity: 0.5;
+  }
+
+  .field__box input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.8rem 0.9rem;
+    background: none;
+    border: 0;
+    color: var(--tone-fg);
+    font-family: inherit;
+    /* Never under 1rem: Safari zooms the page to meet a smaller focused field. */
+    font-size: max(1rem, var(--text-body));
+  }
+
+  /* The whole box takes the ring, not the input inside it. Outlining the input
+     alone drew a rectangle that started after the s and sat right on top of it,
+     which read as the prefix being crossed out. :has() rather than :focus-within
+     so it still answers to focus-visible and not to every click. */
+  .field__box:has(input:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+
+  .field__box input:focus-visible {
+    outline: none;
+  }
+
+  .field__box:has(input[aria-invalid="true"]) {
+    border-color: var(--color-grade-hard);
+  }
+
+  .field__error {
+    margin: 0;
+  }
+
+  .field__error:not(:empty) {
+    margin-top: 0.45rem;
+    font-size: var(--text-eyebrow);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-grade-hard);
+  }
+
+  /* The opt-out. Quiet, because it is what a hiker is allowed to do rather than
+     what they should do. */
+  .waive {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.7rem;
+    font-size: var(--text-eyebrow);
+    line-height: 1.4;
+    opacity: 0.75;
+    cursor: pointer;
+  }
+
+  .waive:hover {
+    opacity: 1;
+  }
+
+  /* Built out of the same parts as the fields above it - the same fill, the same
+     hairline border, a radius scaled down to suit the size - so it reads as one of
+     them rather than as whatever the operating system draws. */
+  .waive input {
+    flex: none;
+    display: grid;
+    place-content: center;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
+    appearance: none;
+    background: color-mix(in srgb, var(--tone-fg) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--tone-fg) 22%, transparent);
+    border-radius: 0.35rem;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-base) ease,
+      border-color var(--duration-base) ease;
+  }
+
+  .waive:hover input {
+    border-color: color-mix(in srgb, var(--tone-fg) 45%, transparent);
+  }
+
+  /* Filled solid when it is on, so the state carries on the block of colour
+     alone. The tick is drawn over that rather than being the only signal. */
+  .waive input:checked {
+    background: var(--tone-fg);
+    border-color: var(--tone-fg);
+  }
+
+  /* Two borders turned on their corner: a tick that follows the tone, which an
+     image or a font glyph could not do. */
+  .waive input::after {
+    content: "";
+    width: 0.6rem;
+    height: 0.32rem;
+    border: 0 solid var(--tone-bg);
+    border-width: 0 0 2px 2px;
+    border-bottom-left-radius: 1px;
+    rotate: -45deg;
+    translate: 0 -0.07rem;
+    opacity: 0;
+    transition: opacity var(--duration-base) ease;
+  }
+
+  .waive input:checked::after {
+    opacity: 1;
+  }
+
+  /* Waived: the box stays on the page so the choice can be undone, but it is
+     plainly no longer in play. */
+  .field--off .field__label,
+  .field--off .field__hint,
+  .field--off .field__box {
+    opacity: 0.4;
+  }
+</style>
