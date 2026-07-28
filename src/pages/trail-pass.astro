@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import { Image } from "astro:assets";
 import clubLogo from "../assets/club-logo.png";
 import Curtain from "../components/Curtain.astro";
+import PassCard from "../components/PassCard.astro";
 import PassField from "../components/PassField.astro";
 import {
   PHONE_EXAMPLE,
@@ -29,24 +30,22 @@ import {
   surface="olive"
 >
   {
-    /* The tab on the home page opens out into an olive field, and this arrives in
-      the same olive - so the navigation itself happens behind a flat colour and is
-      never seen. It fades on a timer with no JavaScript involved, which is what
-      stops it from being able to strand anybody behind it. */
+    /* What the curtain carries while it covers this page. The tab grows into an olive
+      field on the way here and this arrives inside the same field, so the mark and
+      the name ride on the colour that was already there rather than on a second
+      overlay of their own. */
   }
-  <div class="splash" data-tone="olive" aria-hidden="true">
+  <Curtain>
     <Image
-      class="splash__mark"
+      class="opening__mark"
       src={clubLogo}
       alt=""
       width={260}
       height={260}
       loading="eager"
     />
-    <p class="splash__headline text-hero font-display uppercase">Trail pass</p>
-  </div>
-
-  <Curtain />
+    <p class="opening__word text-hero font-display uppercase">Trail pass</p>
+  </Curtain>
 
   <section class="pass px-gutter" data-tone="olive" data-step="form">
     <div class="pass__inner mx-auto">
@@ -121,88 +120,7 @@ import {
       </div>
     </div>
 
-    {
-      /* The pass. Not a card on a page but a screen of its own: the club's green top
-        and bottom with a light sheet through the middle carrying everything that has
-        to be read off it. Three full-bleed bands, so the green runs to the edges of
-        the display and the browser's own chrome joins onto it. */
-    }
-    <div class="ticket" id="ticket" hidden>
-      {
-        /* The masthead goes home, the way a logo in a corner always does. It is the
-          same destination as the link at the foot, and on a pass that fills the
-          screen the mark is the first thing anybody reaches for. */
-      }
-      <div class="ticket__band">
-        <a class="ticket__row" href="/" data-curtain="shrink">
-          {
-            /* The mark carries the club's name, so it is not written out beside
-              it - and it takes a real alt for the same reason. */
-          }
-          <Image
-            class="ticket__badge"
-            src={clubLogo}
-            alt="Griffith Hiking Club"
-            width={140}
-            height={140}
-          />
-          <span class="ticket__kind">Trail pass</span>
-        </a>
-      </div>
-
-      <div class="ticket__body" data-tone="cream">
-        <div class="ticket__sheet">
-          {
-            /* Icon only, so the label is its accessible name rather than a word
-              printed on a pass nobody needs to read twice. */
-          }
-          <button
-            class="ticket__edit"
-            type="button"
-            aria-label="Change details"
-            data-again
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path
-                d="M4.6 19.4l.9-4L15.9 5a2.2 2.2 0 0 1 3.1 3.1L8.6 18.5l-4 .9z"
-              ></path>
-              <path d="M14.4 6.6l3 3"></path>
-            </svg>
-          </button>
-
-          <p class="ticket__name" data-name></p>
-
-          <div class="ticket__code">
-            <img alt="Your trail pass QR code" data-code />
-          </div>
-
-          <p class="ticket__tip caption">
-            Screenshot this for use on your hikes.
-          </p>
-
-          {
-            /* A description list, because that is what it is: labelled values a
-              leader reads off the pass. */
-          }
-          <dl class="ticket__data">
-            <div class="cell">
-              <dt class="cell__label eyebrow">Student number</dt>
-              <dd class="cell__value" data-student></dd>
-            </div>
-            <div class="cell">
-              <dt class="cell__label eyebrow">Phone number</dt>
-              <dd class="cell__value" data-phone></dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-
-      <div class="ticket__foot">
-        <a class="ticket__back caption" href="/" data-curtain="shrink"
-          >← Back to the club</a
-        >
-      </div>
-    </div>
+    <PassCard />
   </section>
 </Base>
 
@@ -469,70 +387,30 @@ import {
 </script>
 
 <style>
-  /* ---- splash ---------------------------------------------------------- */
-  .splash {
-    position: fixed;
-    inset: 0;
-    z-index: 70;
-    display: grid;
-    place-content: center;
-    justify-items: center;
-    gap: 0.9rem;
-    animation: splash-out var(--duration-slow) var(--ease-soft)
-      var(--duration-splash) both;
-  }
-
-  /* visibility, not opacity alone: once it has faded it has to leave the
-     accessibility tree and stop taking pointer events. */
-  @keyframes splash-out {
-    to {
-      opacity: 0;
-      visibility: hidden;
-    }
-  }
-
-  .splash__mark {
+  /* ---- the opening ----------------------------------------------------- */
+  /* Rides on the curtain, which does the covering and the clearing - so this is
+     only ever the two things printed on it. */
+  .opening__mark {
     width: clamp(6rem, 20vw, 8.5rem);
     height: auto;
     border-radius: 50%;
   }
 
-  /* The hero's treatment exactly: same scale, same tightened leading. Capped at
-     two words a line so it breaks where it reads best rather than wherever the
-     viewport happens to run out. */
-  .splash__headline {
+  .opening__word {
     max-width: 8ch;
+    margin: 0;
     line-height: 0.78;
     text-align: center;
   }
 
-  /* Arrives rather than being there already, on the same beats as the hero. */
-  .splash__mark,
-  .splash__headline {
-    animation: splash-rise var(--duration-base) var(--ease-soft) both;
-  }
-
-  .splash__headline {
-    animation-delay: 140ms;
-  }
-
-  @keyframes splash-rise {
-    from {
-      opacity: 0;
-      translate: 0 0.7rem;
-    }
-  }
-
-  /* Nothing here is information, so there is nothing worth holding anybody up
-     for. */
-  @media (prefers-reduced-motion: reduce) {
-    .splash {
-      display: none;
-    }
-  }
-
   /* ---- page ------------------------------------------------------------ */
   .pass {
+    /* How wide a pass is, and how far the card is held off the edges of a phone.
+       Named because four rules depend on it and they have to agree: the form column,
+       the pass measure, the card's cap and its margin. */
+    --measure: 27rem;
+    --inset: 0.9rem;
+
     min-height: 100svh;
     padding-block: var(--spacing-gutter-block);
     display: grid;
@@ -554,7 +432,7 @@ import {
      centre without being pinned to the top of it. */
   @media (width >= 58rem) {
     .pass__inner {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
+      grid-template-columns: minmax(0, 1fr) minmax(0, var(--measure));
       grid-template-rows: 2fr 1fr;
       /* No row gap: the bands are a measuring device rather than a division, and a
          gap between them would move the third they mark. */
@@ -622,17 +500,15 @@ import {
       color-mix(in srgb, var(--color-ink) 30%, transparent);
   }
 
-  /* One column, whatever the room. The labels are whole questions, and two of
-     those side by side wrap every single one onto a second line - the width buys
-     nothing and costs the rhythm. */
+  /* One column, whatever the room: the labels are whole questions, and two side by
+     side wrap every one of them. */
   .fields {
     display: grid;
     gap: clamp(1.1rem, 3svh, 1.5rem);
   }
 
   /* ---- actions --------------------------------------------------------- */
-  /* Full width. There is one thing to do on this panel, and a pill floated to one
-     corner of it only made the eye look for a second. */
+  /* Full width: there is one thing to do on this panel. */
   .submit {
     width: 100%;
     padding: var(--spacing-control-block) var(--spacing-control-inline);
@@ -659,303 +535,10 @@ import {
     transform: translateY(0) scale(0.985);
   }
 
-  /* ---- the pass -------------------------------------------------------- */
-  /* A screen, not a card: the band reaches the edges of the display and the
-     section's own gutters are handed to the three bands so each can decide where
-     its edge is. */
+  /* The pass takes the whole screen once it exists, gutters included - its own
+     bands decide where their edges are. See PassCard for the rest. */
   .pass[data-step="pass"] {
     padding: 0;
     align-content: stretch;
-  }
-
-  /* Header, content, action. The middle band takes the slack, so the code sits in
-     the optical centre of whatever screen this is on. */
-  .ticket {
-    min-height: 100svh;
-    display: grid;
-    /* minmax(0, 1fr), not the implicit auto column. An auto column sizes to its
-       widest content, and fitName sets the name to nowrap while it measures - so a
-       long name grew the column, the sheet and the page with it, past the edge of
-       the screen. Capping the column is what makes the name the thing that has to
-       give rather than the layout. */
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto 1fr auto;
-  }
-
-  /* Each of the three bands paints edge to edge and keeps its own measure down the
-     middle, so the mark, the name and the button all line up however wide the
-     screen is. Full bleed matters here: the page stays the club's green top and
-     bottom, which is what Safari tints its chrome with, so the masthead runs into
-     the browser rather than stopping at a seam below it. */
-  .ticket__band,
-  .ticket__body,
-  .ticket__foot {
-    width: 100%;
-    padding-inline: var(--spacing-gutter);
-  }
-
-  .ticket__row,
-  .ticket__sheet,
-  .ticket__foot > * {
-    width: 100%;
-    max-width: 27rem;
-    margin-inline: auto;
-  }
-
-  /* The brand anchor. A credential is recognisable by its header before anything
-     on it has been read, and this is the one place the club's colour belongs once
-     the pass itself is on paper. */
-  /* Trimmed, so the card between the band and the foot gets the height: a pass
-     wants to be oblong, and these two were taking the room it needed to be. */
-  .ticket__band {
-    padding-block: clamp(0.5rem, 1.6svh, 0.8rem);
-  }
-
-  .ticket__row {
-    display: flex;
-    align-items: center;
-    /* A link, so it gets a target like one: the mark and the wordmark together came
-       to 34px on a phone, under the 44px a thumb needs. */
-    min-height: 2.75rem;
-    gap: 0.7rem;
-  }
-
-  /* Fixed with the wordmark beside it, so the pair holds together as one masthead
-     at every width. */
-  .ticket__badge {
-    width: 2rem;
-    height: 2rem;
-    flex: none;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-
-  /* A masthead. The mark and these two words are the whole header, so the words
-     get the display face in caps - the hero's treatment, which is what the top of
-     this site looks like. Cream on the olive rather than the sand accent, which
-     made it read as a category tag rather than the name of the thing. */
-  .ticket__kind {
-    font-family: var(--font-display);
-    /* One fixed size rather than a step off the fluid scale. A masthead is the same
-       mark at every size - it is the name of the thing, not a heading that should
-       breathe with the column - and it was dropping from 46px to 26px between a
-       desktop and a phone for no reason a reader could see. */
-    font-size: 1.75rem;
-    line-height: 0.9;
-    letter-spacing: var(--text-title--letter-spacing);
-    text-transform: uppercase;
-  }
-
-  /* The light sheet: the pass itself, and the only part that has to be readable in
-     a photograph. Everything numeric stays on it, which is also what keeps the
-     alert red usable - that red cannot be read as text on the green. */
-  .ticket__body {
-    position: relative;
-    /* Capped and centred. The band and the foot stay full bleed so the olive runs
-       to the edges of the display; this one stops, which is what lets the rounded
-       corners read as a sheet lying on top of it. The cap is the measure plus the
-       gutter either side, so the content inside it lines up with the masthead's. */
-    /* Capped on a wide screen, and always held off the edges by the same 0.9rem the
-       tool sits in from - so the olive frames it on every size rather than the card
-       running into the display. */
-    max-width: min(
-      calc(27rem + 2 * var(--spacing-gutter)),
-      calc(100% - 1.8rem)
-    );
-    margin-inline: auto;
-    display: grid;
-    align-content: center;
-    /* Rounded, so the olive reads as one surface carrying on behind this one rather
-       than as three stacked stripes. The corners are where that happens: they are
-       the only place the colour underneath shows through. */
-    border-radius: var(--radius-sheet);
-  }
-
-  .ticket__sheet {
-    display: grid;
-    justify-items: center;
-    gap: clamp(0.7rem, 2.2svh, 1.4rem);
-    padding-block: clamp(1.1rem, 4svh, 2.25rem);
-  }
-
-  /* Centred over the code, and in the serif rather than the display face: this is
-     somebody's name, not a headline, and it is set the way they typed it. Anton in
-     caps would flatten "O'Connor" and "van der Berg" into the same shout. */
-  .ticket__name {
-    margin: 0;
-    /* Takes the full measure rather than shrinking to its text. It has to: fitName
-       compares the text's width against this box, and a box that is only ever as
-       wide as its own contents can never report as too narrow - which is why a name
-       long enough to overflow was silently doing so instead of being scaled down.
-       Kept clear of the tool at the corner, and only by as much as the tool actually
-       reaches past the gutter - nothing on a wide screen, where it does not. */
-    justify-self: stretch;
-    /* Without this the nowrap text fitName sets counts as the grid item's automatic
-       minimum size, and every track above it widens to fit - the sheet grew past the
-       screen instead of the name coming down. */
-    min-width: 0;
-    padding-inline: max(0rem, calc(3.65rem - var(--spacing-gutter)));
-    font-family: var(--font-serif);
-    /* The starting size, the same on every screen. Only a name too long for the
-       measure comes down from here, and that is done by measuring it - see fitName
-       in the script, because CSS cannot count characters. */
-    font-size: 2.5rem;
-    font-weight: 500;
-    line-height: 1.05;
-    letter-spacing: -0.01em;
-    text-align: center;
-    text-wrap: balance;
-    overflow-wrap: anywhere;
-  }
-
-  /* Square, because a QR is square. Lifted off the paper rather than outlined:
-     the shadow is what says this is the part to point a camera at. The bounds keep
-     the whole pass on one screen, which is the only way a screenshot of it is
-     any use. */
-  /* A small round tool at the top corner of the sheet rather than a button across
-     the foot: changing details is the rare thing you do here, and a full-width pill
-     was taking the room the pass wants. Anchored to the white area, not to the sheet
-     inside it - the sheet is vertically centred, which left the tool floating down
-     beside the name. 2.75rem square, because a 44px target is the whole point of a
-     control this small. */
-  .ticket__edit {
-    position: absolute;
-    /* The same inset from the top and the right of the sheet, so it sits square in
-       the corner rather than being measured off two different things. */
-    top: 0.9rem;
-    right: 0.9rem;
-    display: grid;
-    place-items: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    background: none;
-    color: inherit;
-    border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
-    border-radius: 50%;
-    cursor: pointer;
-    transition:
-      border-color var(--duration-base) ease,
-      background-color var(--duration-base) ease;
-  }
-
-  .ticket__edit:hover {
-    border-color: color-mix(in srgb, currentColor 48%, transparent);
-    background: color-mix(in srgb, currentColor 7%, transparent);
-  }
-
-  .ticket__edit svg {
-    width: 1.15rem;
-    height: 1.15rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .ticket__code {
-    display: grid;
-    place-items: center;
-    width: 100%;
-    max-width: min(100%, 19rem, 30svh);
-    aspect-ratio: 1;
-    padding: 0.85rem;
-    background: var(--color-white);
-    border-radius: var(--radius-card);
-  }
-
-  .ticket__code img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    image-rendering: pixelated;
-  }
-
-  .ticket__tip {
-    margin: 0;
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: var(--text-body);
-    text-align: center;
-    text-transform: none;
-    letter-spacing: normal;
-    opacity: 0.6;
-  }
-
-  /* Supporting detail, under the code rather than above it: a leader scans first
-     and reads second.
-     No rule above it. The olive band is the one division this needs; hairlines
-     between every block turned the pass into a form again. Space does the same
-     job without drawing anything. */
-  .ticket__data {
-    justify-self: stretch;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-    gap: 0.8rem 1.25rem;
-    margin: 0;
-    padding-top: clamp(0.4rem, 1.5svh, 0.8rem);
-  }
-
-  /* Centred in their columns, like everything else on the pass. Left-aligned they
-     were the only thing on it reading off a different edge. */
-  .cell {
-    text-align: center;
-  }
-
-  .cell__label {
-    margin: 0;
-    opacity: 0.55;
-  }
-
-  /* Tabular, so the numbers line up as numbers rather than as words. */
-  .cell__value {
-    margin: 0.25rem 0 0;
-    font-family: var(--font-serif);
-    font-size: var(--text-lead);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.03em;
-    overflow-wrap: anywhere;
-  }
-
-  /* Said rather than left blank, so a leader can tell a number that is missing
-     from one they have not spotted. Red *and* italic: colour alone is not a state
-     a colourblind reader can see, and this one matters. */
-  .cell--absent .cell__label,
-  .cell--absent .cell__value {
-    color: var(--color-alert);
-    opacity: 1;
-  }
-
-  .cell--absent .cell__value {
-    font-style: italic;
-    letter-spacing: normal;
-  }
-
-  /* Just the way back now that changing details has moved onto the sheet. */
-  .ticket__foot {
-    display: grid;
-    justify-items: center;
-    text-align: center;
-    /* Trimmed to almost nothing. The link keeps its 2.75rem target - that is what
-       makes it pressable - so the height comes off the padding around it. */
-    padding-block: clamp(0.1rem, 0.6svh, 0.35rem);
-  }
-
-  /* A real target. This was caption-height text - about 16px of it - sitting at the
-     very bottom edge of the screen, which is the least accurate place a thumb ever
-     lands. 2.75rem is the 44px both Apple and WCAG's enhanced target size ask for,
-     and the foot already gives it the full measure to be wide in. */
-  .ticket__back {
-    display: grid;
-    place-content: center;
-    min-height: 2.75rem;
-    padding: 0.5rem 1rem;
-    opacity: 0.75;
-    transition: opacity var(--duration-base) ease;
-  }
-
-  .ticket__back:hover {
-    opacity: 1;
   }
 </style>

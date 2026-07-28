@@ -44,31 +44,25 @@ const errorId = `${name}-error`;
   }
 
   {
-    /* The prefix is part of the value's shape, not part of what is typed, so it
-      sits inside the box and the box carries the border rather than the input. */
+    /* One box, whether or not there is a prefix. The box carries the border and the
+      spacing and the input is transparent inside it - rendering the input twice, once
+      bare and once wrapped, meant undoing the bare styling again with !important. */
   }
-  {
-    prefix ? (
-      <span class="field__box">
+  <span class="field__box">
+    {
+      prefix && (
         <span class="field__prefix" aria-hidden="true">
           {prefix}
         </span>
-        <input
-          id={name}
-          name={name}
-          aria-describedby={[hintId, errorId].filter(Boolean).join(" ")}
-          {...input}
-        />
-      </span>
-    ) : (
-      <input
-        id={name}
-        name={name}
-        aria-describedby={[hintId, errorId].filter(Boolean).join(" ")}
-        {...input}
-      />
-    )
-  }
+      )
+    }
+    <input
+      id={name}
+      name={name}
+      aria-describedby={[hintId, errorId].filter(Boolean).join(" ")}
+      {...input}
+    />
+  </span>
 
   <p class="field__error" id={errorId} data-error></p>
 
@@ -114,6 +108,7 @@ const errorId = `${name}-error`;
     background: color-mix(in srgb, var(--tone-fg) 6%, transparent);
     border: 1px solid color-mix(in srgb, var(--tone-fg) 22%, transparent);
     border-radius: var(--radius-card);
+    transition: border-color var(--duration-base) ease;
   }
 
   .field__prefix {
@@ -123,25 +118,16 @@ const errorId = `${name}-error`;
     opacity: 0.5;
   }
 
-  .field input:not([type="checkbox"]) {
+  .field__box input {
     width: 100%;
-    margin-top: 0.55rem;
+    min-width: 0;
     padding: 0.8rem 0.9rem;
+    background: none;
+    border: 0;
+    color: var(--tone-fg);
     font-family: inherit;
     /* Never under 1rem: Safari zooms the page to meet a smaller focused field. */
     font-size: max(1rem, var(--text-body));
-    color: var(--tone-fg);
-    background: color-mix(in srgb, var(--tone-fg) 6%, transparent);
-    border: 1px solid color-mix(in srgb, var(--tone-fg) 22%, transparent);
-    border-radius: var(--radius-card);
-    transition: border-color var(--duration-base) ease;
-  }
-
-  /* The box already draws the border and the spacing for a prefixed field. */
-  .field__box input {
-    margin-top: 0 !important;
-    background: none !important;
-    border: 0 !important;
   }
 
   /* The whole box takes the ring, not the input inside it. Outlining the input
@@ -157,7 +143,7 @@ const errorId = `${name}-error`;
     outline: none;
   }
 
-  .field input[aria-invalid="true"] {
+  .field__box:has(input[aria-invalid="true"]) {
     border-color: var(--color-grade-hard);
   }
 
@@ -244,8 +230,7 @@ const errorId = `${name}-error`;
      plainly no longer in play. */
   .field--off .field__label,
   .field--off .field__hint,
-  .field--off .field__box,
-  .field--off input:not([type="checkbox"]) {
+  .field--off .field__box {
     opacity: 0.4;
   }
 </style>

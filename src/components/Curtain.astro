@@ -1,30 +1,29 @@
 ---
 /** The olive curtain both directions of the trail pass travel behind.
  *
- *  Going out, the tab that was pressed grows into a field of olive that fills the
- *  screen, and only then does the browser navigate. Coming back, the movement
- *  happens on the far side instead: the club page arrives already covered, and the
- *  curtain shrinks back down into the tab it came out of, uncovering the club
- *  behind it. Out and back are one gesture played each way.
+ *  Out, the pressed tab grows into a field of olive filling the screen before the
+ *  browser navigates. Back, the movement happens on the far side: the club page
+ *  arrives already covered and the curtain shrinks into the tab it came out of,
+ *  uncovering the club. One gesture played each way - and because the tab is the
+ *  same olive, the last frame lands exactly on it.
  *
- *  Because the tab is the same olive as the curtain, the last frame of the shrink
- *  lands exactly on it, and the curtain becomes the tab again.
+ *  `data-curtain="grow"` marks a link that opens the pass and `"shrink"` one that
+ *  returns, so direction is a decision in the markup; the arriving page finds what
+ *  to shrink into by looking for the grow link it has.
  *
- *  One component on both pages. `data-curtain="grow"` marks a link that opens the
- *  pass, `data-curtain="shrink"` one that returns - so which way a link travels is
- *  a decision in the markup, and the arriving page knows what to shrink into by
- *  looking for the grow link it has.
- *
- *  Entirely additive: without JavaScript, or with reduced motion, these are
- *  ordinary links and the navigation is an ordinary one.
+ *  Additive: without JavaScript, or with reduced motion, these are ordinary links.
  */
 ---
 
 {
-  /* Rendered rather than built in script, so its colour and its stacking stay in
-    the stylesheet with everything else and script only ever animates the clip. */
+  /* Rendered rather than built in script, so its colour and stacking stay in the
+    stylesheet and script only ever animates the clip.
+    Anything slotted in rides on it while it covers - which is how the trail pass
+    gets its opening mark without a second full-screen overlay of its own. */
 }
-<div class="curtain" data-curtain-field aria-hidden="true"></div>
+<div class="curtain" data-curtain-field aria-hidden="true">
+  <slot />
+</div>
 
 <script>
   import { CURTAIN_FLAG as FLAG } from "../lib/pass/curtain";
@@ -37,8 +36,8 @@
 
   const ms = (name: string) => Number.parseFloat(style(name));
 
-  /* Private browsing can refuse storage outright. A curtain that cannot be
-   * remembered is a navigation that simply does not animate, which is fine. */
+  /* Private browsing can refuse storage; then the navigation just does not
+   * animate. */
   const flag = {
     set(way: string) {
       try {
@@ -91,11 +90,9 @@
   const way = flag.take();
 
   if (field && way && !still) {
-    /* Whatever opens the pass on this page is what the curtain shrinks back into -
-     * but only if it is actually on screen. There are two of them on the club page,
-     * the tab and the band's button, and the band's comes first in the document
-     * while sitting thousands of pixels down it: taking the first one collapsed the
-     * curtain into somewhere nobody could see. */
+    /* Whatever opens the pass here is what it shrinks into, but only if that is on
+     * screen: the club page has two, and the band's button comes first in the
+     * document while sitting thousands of pixels down it. */
     const home = [
       ...document.querySelectorAll<HTMLElement>('a[data-curtain="grow"]'),
     ].find((el) => {
@@ -193,7 +190,12 @@
     position: fixed;
     inset: 0;
     z-index: 60;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.9rem;
     background: var(--color-olive);
+    color: var(--color-cream);
     pointer-events: none;
     clip-path: inset(50%);
   }
@@ -205,10 +207,12 @@
     clip-path: none;
   }
 
-  /* The fallback for a page with nothing to shrink into: full screen, then gone. */
+  /* For a page with nothing to shrink into - the trail pass, which is where the
+     journey ends. Held long enough to read what it is carrying, then gone. */
   .curtain[data-lifting] {
     clip-path: none;
-    animation: curtain-lift var(--duration-slow) var(--ease-soft) both;
+    animation: curtain-lift var(--duration-slow) var(--ease-soft)
+      var(--duration-splash) both;
   }
 
   /* visibility, not opacity alone: once it has cleared it has to stop taking
