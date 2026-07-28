@@ -11,8 +11,21 @@
  *  returns, so direction is a decision in the markup; the arriving page finds what
  *  to shrink into by looking for the grow link it has.
  *
+ *  `opening` is for the page at the end of the journey: it covers from its own first
+ *  paint and lifts on a timer, in CSS alone, so what is behind it is never shown
+ *  first no matter how somebody arrived - by the tab, by a reload, or by typing the
+ *  address in. The flag only decides how the curtain *moves*, never whether the page
+ *  starts covered.
+ *
  *  Additive: without JavaScript, or with reduced motion, these are ordinary links.
  */
+interface Props {
+  /** Cover this page from its first paint and lift on a timer, with no script and
+   *  no navigation involved. */
+  opening?: boolean;
+}
+
+const { opening } = Astro.props;
 ---
 
 {
@@ -21,7 +34,12 @@
     Anything slotted in rides on it while it covers - which is how the trail pass
     gets its opening mark without a second full-screen overlay of its own. */
 }
-<div class="curtain" data-curtain-field aria-hidden="true">
+<div
+  class="curtain"
+  data-curtain-field
+  data-opening={opening ? "" : undefined}
+  aria-hidden="true"
+>
   <slot />
 </div>
 
@@ -89,7 +107,11 @@
   // ---- arriving -------------------------------------------------------------
   const way = flag.take();
 
-  if (field && way && !still) {
+  /* An opening page is already covering itself in CSS and already on its way out, so
+   * there is nothing for the arrival to do here. */
+  const opening = field?.hasAttribute("data-opening");
+
+  if (field && way && !opening && !still) {
     /* Whatever opens the pass here is what it shrinks into, but only if that is on
      * screen: the club page has two, and the band's button comes first in the
      * document while sitting thousands of pixels down it. */
@@ -207,8 +229,11 @@
     clip-path: none;
   }
 
-  /* For a page with nothing to shrink into - the trail pass, which is where the
-     journey ends. Held long enough to read what it is carrying, then gone. */
+  /* Covering from the first paint and lifting on a timer, in CSS alone - so the page
+     behind is never shown first, however somebody got here. This is the one that
+     matters on the trail pass; `data-lifting` is its scripted equivalent for a page
+     that was arrived at but has nothing to shrink into. */
+  .curtain[data-opening],
   .curtain[data-lifting] {
     clip-path: none;
     animation: curtain-lift var(--duration-slow) var(--ease-soft)
@@ -221,6 +246,13 @@
     to {
       opacity: 0;
       visibility: hidden;
+    }
+  }
+
+  /* Nothing here is information, so there is nothing worth holding anybody up for. */
+  @media (prefers-reduced-motion: reduce) {
+    .curtain[data-opening] {
+      display: none;
     }
   }
 </style>
