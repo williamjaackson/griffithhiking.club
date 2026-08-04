@@ -31,12 +31,10 @@ import {
   surface="olive"
 >
   {
-    /* What the curtain carries while it covers this page. The tab grows into an olive
-      field on the way here and this arrives inside the same field, so the mark and
-      the name ride on the colour that was already there rather than on a second
-      overlay of their own. */
+    /* What the splash carries while it covers this page: the mark and the name
+      ride on the curtain rather than on a second overlay of their own. */
   }
-  <Curtain opening>
+  <Curtain>
     <Image
       class="opening__mark"
       src={clubLogo}
@@ -58,9 +56,7 @@ import {
           cropped around the thing that got you here. */
       }
       <div class="pass__intro">
-        <a class="pass__back caption" href="/" data-curtain="shrink"
-          >← Back to the club</a
-        >
+        <a class="pass__back caption" href="/">← Back to the club</a>
 
         <h1 class="pass__title font-display mt-6 uppercase">Your trail pass</h1>
 
