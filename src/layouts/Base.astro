@@ -6,7 +6,6 @@ import antonWoff2 from "@fontsource/anton/files/anton-latin-400-normal.woff2?url
 // Read rather than repeated: the browser chrome colour is a palette value, and
 // a second copy of it here is exactly the drift the token layer exists to stop.
 import tokens from "../styles/tokens.css?raw";
-import { CURTAIN_FLAG } from "../lib/pass/curtain";
 
 interface Props {
   title: string;
@@ -41,30 +40,6 @@ const themeColor = tokens.match(/--color-olive:\s*(#[0-9a-f]{6})/i)?.[1];
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content={themeColor} />
-    {
-      /* Inline, and in the head, because it has to run before the first paint. The
-        trail pass curtain is drawn by the page you are leaving and cleared by the
-        page you arrive at, and the module that clears it is deferred - so on a phone
-        the club page got a frame or two uncovered before the curtain appeared over
-        it and shrank away, which read as a flicker. Marking the root here means the
-        page is already covered the first time it paints.
-
-        The timeout is the safety net: if the module never runs at all, this is what
-        stops the curtain sitting over the page for good. */
-    }
-    <script is:inline define:vars={{ CURTAIN_FLAG }}>
-      try {
-        if (sessionStorage.getItem(CURTAIN_FLAG) === "shrink") {
-          document.documentElement.dataset.curtain = "shrink";
-          setTimeout(
-            () => document.documentElement.removeAttribute("data-curtain"),
-            2000,
-          );
-        }
-      } catch {
-        // Storage refused. Nothing to cover, nothing to clear.
-      }
-    </script>
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
 

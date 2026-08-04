@@ -135,15 +135,7 @@
   --duration-slow: 600ms;
   /* First-paint arrival. Long enough to read as a rise rather than a flash. */
   --duration-entrance: 700ms;
-  /* The trail pass tab opening out to fill the screen. Longer than a control
-   * because it crosses the whole viewport; at control speed it reads as a
-   * flicker rather than something opening. */
-  --duration-zoom: 380ms;
   /* How long the trail pass splash holds before it gives way to the form. Long
    * enough to read the mark, short enough that it never becomes a wait. */
   --duration-splash: 650ms;
-  /* The curtain shrinking back into the tab. Quicker than anything else here: on the
-   * way out the olive is arriving and wants to be watched, but on the way back the
-   * club is already behind it and the only job left is to get out of the way. */
-  --duration-reveal: 300ms;
 }
