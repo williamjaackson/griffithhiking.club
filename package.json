@@ -13,13 +13,15 @@
     "astro": "astro",
     "check": "astro check",
     "check:tokens": "bash scripts/check-tokens.sh",
+    "check:studio": "tsc --noEmit -p studio",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check:cms": "node scripts/check-cms-fields.mjs",
-    "test": "node --test \"src/**/*.test.ts\""
+    "test": "node --test \"src/**/*.test.ts\"",
+    "setup:sanity": "bash scripts/setup-sanity.sh"
   },
   "packageManager": "pnpm@11.17.0",
   "dependencies": {
+    "@sanity/client": "^8.4.0",
     "astro": "^7.1.3",
     "qrcode": "^1.5.4"
   },
@@ -35,7 +37,6 @@
     "prettier-plugin-astro": "^0.14.1",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.3",
-    "typescript": "^6.0.3",
-    "yaml": "^2.9.0"
+    "typescript": "^6.0.3"
   }
 }

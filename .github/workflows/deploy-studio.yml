@@ -1,0 +1,41 @@
+name: Deploy studio
+
+# The editing UI is hosted by Sanity, not on the VPS, and only changes when its
+# schema or configuration does. Site deploys leave it alone.
+on:
+  push:
+    branches: [main]
+    paths:
+      - studio/**
+      - sanity.project.json
+      # The studio's option lists are imported from here.
+      - src/lib/events.ts
+      - .github/workflows/deploy-studio.yml
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-studio
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Builds and uploads to <studioHost>.sanity.studio, both read from
+      # sanity.project.json. The token is a robot token with the Deploy Studio
+      # role, made by scripts/setup-sanity.sh.
+      - run: pnpm -C studio deploy --yes
+        env:
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}

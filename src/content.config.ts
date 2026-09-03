@@ -1,10 +1,11 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
 import { DIFFICULTIES, KINDS, isRealDate } from "./lib/events";
+import { fetchEvents } from "./lib/sanity";
 
-/** Photos live beside their entry rather than in src/assets, because that is
- *  where an entry-relative CMS upload lands. `image()` resolves the bare
- *  filename the CMS writes and still runs it through the build pipeline. */
+/** Photos live beside their entry rather than in src/assets, so a section's
+ *  words and its pictures change together in one folder. `image()` resolves
+ *  the bare filename and still runs it through the build pipeline. */
 
 const home = defineCollection({
   loader: glob({ pattern: "index.yaml", base: "./src/content/home" }),
@@ -74,21 +75,21 @@ const gallery = (base: string) =>
 const moments = gallery("./src/content/moments");
 const instagram = gallery("./src/content/instagram");
 
-/** A calendar date, always `YYYY-MM-DD`.
- *
- *  Preprocessed because an unquoted `2026-08-02` in YAML parses as a Date, and
- *  whether the value arrives quoted depends on who wrote the file - a person or
- *  the CMS. Normalising here means the rest of the site only ever sees a string.
- *  Slicing the ISO form is exact: the value was parsed as UTC midnight. */
-const eventDate = z.preprocess(
-  (value) => (value instanceof Date ? value.toISOString().slice(0, 10) : value),
-  z
-    .string()
-    .refine(isRealDate, "must be a real calendar date, written as YYYY-MM-DD"),
-);
+/** A calendar date, always `YYYY-MM-DD`, which is how Sanity's date type
+ *  stores it. The pattern alone would accept 2026-13-45. */
+const eventDate = z
+  .string()
+  .refine(isRealDate, "must be a real calendar date, written as YYYY-MM-DD");
 
+/** The calendar. Fetched from Sanity rather than read from files, because it
+ *  changes weekly and is edited by the club's executives, who should never
+ *  need a GitHub account - see docs/cms.md.
+ *
+ *  The schema still runs on every document. The studio enforces the same rules
+ *  before Publish, but the build is the last line, and a build that trusted the
+ *  CMS would ship whatever a future studio change let through. */
 const events = defineCollection({
-  loader: glob({ pattern: "*.yaml", base: "./src/content/events" }),
+  loader: fetchEvents,
   schema: z
     .object({
       title: z.string().min(1, "every event needs a name"),

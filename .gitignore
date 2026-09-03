@@ -25,3 +25,7 @@ pnpm-debug.log*
 
 # visual-identity mockup, kept local only (snapshotted on the mockup-snapshot branch)
 mockup/
+
+# Sanity Studio build output and local runtime state
+studio/dist/
+studio/.sanity/
