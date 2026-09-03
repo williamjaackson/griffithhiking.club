@@ -137,26 +137,16 @@ export const splitUpcoming = <T extends EventDates>(
   return { next: upcoming[0] ?? null, queue: upcoming.slice(1) };
 };
 
-/** The date as it appears on a card: a large day over a small month.
+/** The first date as it appears on a card: a large day over a small month.
  *
  *  Days stay zero-padded so the numerals hold a consistent width in display
- *  type. Multi-day trips collapse to a range, and a range that crosses a month
- *  boundary widens the month rather than silently losing a date. */
+ *  type. Multi-day events still use their full range for screen readers. */
 export const formatBadge = (
   event: EventDates,
 ): { day: string; month: string } => {
   const [, startMonth, startDay] = event.start.split("-");
   const month = MONTHS[Number(startMonth) - 1];
-
-  if (!event.end || event.end === event.start) {
-    return { day: startDay, month };
-  }
-
-  const [, endMonth, endDay] = event.end.split("-");
-  const day = `${startDay}–${endDay}`;
-  return startMonth === endMonth
-    ? { day, month }
-    : { day, month: `${month}–${MONTHS[Number(endMonth) - 1]}` };
+  return { day: startDay, month };
 };
 
 /** The date spelled out, for screen readers and the `datetime` attribute's

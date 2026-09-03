@@ -126,17 +126,17 @@ test("formatBadge shows a padded day over an abbreviated month", () => {
   });
 });
 
-test("formatBadge collapses a multi-day trip to a range", () => {
+test("formatBadge shows the first date of a multi-day trip", () => {
   assert.deepEqual(formatBadge({ start: "2026-10-23", end: "2026-10-25" }), {
-    day: "23–25",
+    day: "23",
     month: "OCT",
   });
 });
 
-test("formatBadge widens the month when a range crosses one", () => {
+test("formatBadge shows the first date when a trip crosses a month", () => {
   assert.deepEqual(formatBadge({ start: "2026-10-30", end: "2026-11-01" }), {
-    day: "30–01",
-    month: "OCT–NOV",
+    day: "30",
+    month: "OCT",
   });
 });
 
