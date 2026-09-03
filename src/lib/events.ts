@@ -67,6 +67,14 @@ export const clubToday = (now: Date): string => {
 export const KINDS = ["hike", "trip", "social"] as const;
 export type Kind = (typeof KINDS)[number];
 
+/** How each kind is named to an editor. The site never shows these; the studio
+ *  does, and reads them from here so its options cannot drift from KINDS. */
+export const KIND_LABELS: Record<Kind, string> = {
+  hike: "Hike",
+  trip: "Overnight trip",
+  social: "Social event",
+};
+
 /** The grades, easiest first. Order is meaning here: the index drives how many
  *  peaks the ridge fills, so this array is the scale, not just a list. */
 export const DIFFICULTIES = [

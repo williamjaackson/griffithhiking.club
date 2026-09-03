@@ -3,10 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    # `content` is included so the required `check` context lands on that SHA. A
-    # pull request opened with GITHUB_TOKEN does not trigger workflows, so without
-    # this the auto-merge would wait forever for a check that never runs.
-    branches: [main, content]
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -34,9 +31,6 @@ jobs:
       # Raw values may only live in the token layer.
       - run: pnpm check:tokens
 
-      # The CMS config and the content schema must not drift apart.
-      - run: pnpm check:cms
-
       # The date rules decide which hikes are shown at all.
       - run: pnpm test
 
@@ -44,4 +38,9 @@ jobs:
       # the 7.x native compiler does not expose the API this relies on.
       - run: pnpm check
 
+      # The studio is its own package, outside astro check's reach.
+      - run: pnpm check:studio
+
+      # Reads the calendar from Sanity, so this needs the network and a filled-in
+      # sanity.project.json. No token: the dataset is public.
       - run: pnpm build

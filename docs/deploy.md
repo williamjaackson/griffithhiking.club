@@ -1,7 +1,9 @@
 # Deployment
 
 Static Astro build, deployed to a Hostinger VPS by GitHub Actions on every push
-to `main`. Nothing runs on the server for this site — nginx serves files.
+to `main`, nightly at 05:00 Brisbane, and whenever Sanity reports a published
+event (see [cms.md](cms.md)). Nothing runs on the server for this site — nginx
+serves files.
 
 ## Where everything lives
 

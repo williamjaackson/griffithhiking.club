@@ -9,6 +9,11 @@ on:
   # Filtering is day-granular, so once a day is exactly enough.
   schedule:
     - cron: "0 19 * * *"
+  # Fired by a Sanity webhook when an event is published, so an edit in the
+  # studio is live within a couple of minutes. The nightly build above is the
+  # fallback if the webhook or its token ever lapses. See docs/cms.md.
+  repository_dispatch:
+    types: [content-published]
   workflow_dispatch:
 
 # Never cancel a deploy midway - a half-applied release is worse than a slow one.
