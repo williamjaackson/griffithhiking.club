@@ -42,6 +42,17 @@
    * grade-hard included, which measures 1.46:1 on olive. */
   --color-alert: #a8382c;
 
+  /* ---- signals ---------------------------------------------------------- */
+  /* The attendance app flashes the whole screen on a scan, and a leader has to
+   * read the colour from arm's length in daylight without reading a word. So
+   * these are the traffic-light three, not the palette's earth tones: green
+   * for a check-in or check-out that went through, yellow for a repeat, red
+   * for anything to look at. Each is a full-screen wash for half a second and
+   * never carries text, so contrast is not the measure; being unmistakable is. */
+  --color-signal-go: #3e8e41;
+  --color-signal-wait: #e0ac1c;
+  --color-signal-stop: #b8352b;
+
   /* ---- families ------------------------------------------------------ */
   /* Anton replaces Impact, which is absent on most Android and has
    * inconsistent metrics across platforms. */

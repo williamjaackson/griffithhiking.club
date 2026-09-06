@@ -1,0 +1,2630 @@
+---
+import Base from "../../layouts/Base.astro";
+import PassField from "../../components/PassField.astro";
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+import clubLogo from "../../assets/club-logo.png";
+import { clubToday, formatBadge, getUpcoming } from "../../lib/events";
+import {
+  PHONE_EXAMPLE,
+  PHONE_HINT,
+  STUDENT_NUMBER_EXAMPLE,
+  STUDENT_NUMBER_HINT,
+} from "../../lib/pass/validation";
+import wasmUrl from "zxing-wasm/reader/zxing_reader.wasm?url";
+
+/** Attendance: the leader's half of the trail pass.
+ *
+ *  Reads the codes hikers made at /trail-pass and keeps a roll for the hike:
+ *  who checked in, and who has checked out again. Everything happens on the
+ *  leader's phone, in aeroplane mode if need be: the page, its scripts and the
+ *  barcode reader are cached by public/scan/sw.js, and the roll lives in
+ *  localStorage until it is exported or cleared.
+ *
+ *  In a browser tab the page is only an invitation to install it, with the
+ *  steps for the phone it is on. Once it is on a home screen it runs as an
+ *  app, and then it has three states: which hike, the scanner, the roll.
+ *  Adding someone by hand and filling in a number they did not put on their
+ *  pass are dialogs over the top, so the camera never loses its place. See
+ *  docs/scanner.md.
+ *
+ *  The hike list is decided at build time, like the calendar on the home page.
+ *  The site rebuilds nightly and on every publish, and the worker refreshes the
+ *  app whenever the phone is online, so the list is at most a day old.
+ */
+const all = await getCollection("events");
+const upcoming = getUpcoming(
+  all.map((entry) => ({ id: entry.id, ...entry.data })),
+  clubToday(new Date()),
+);
+---
+
+<Base
+  title="Attendance · Griffith Hiking Club"
+  description="Check trail passes at the trailhead."
+  surface="olive"
+  manifest="/scan/manifest.webmanifest"
+>
+  <Fragment slot="head">
+    <meta name="robots" content="noindex" />
+    {
+      /* Opens without browser chrome once it is on a home screen. iOS reads its
+         own pair of tags rather than the manifest for this. */
+    }
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Attendance" />
+    {
+      /* The barcode reader's WebAssembly, for browsers without a reader of
+         their own. Listed here so the build can hand its URL to the service
+         worker: the page is the one place every asset the app needs is named. */
+    }
+    <link rel="prefetch" href={wasmUrl} as="fetch" crossorigin="anonymous" />
+  </Fragment>
+
+  {
+    /* The whole screen, in the colour of what just happened, until the leader
+       taps it away. Green needs a glance; red is where a check-in missing a
+       number gets typed in, so it carries the two fields and waits. Scanning
+       pauses while it is up, so the next hiker cannot be read before this one
+       is dealt with. */
+  }
+  <div class="verdict" data-verdict role="dialog" aria-live="assertive" hidden>
+    <div class="verdict__body">
+      <p class="verdict__kind eyebrow" data-verdict-kind></p>
+      <p class="verdict__name font-display" data-verdict-name></p>
+      <p class="verdict__detail" data-verdict-detail></p>
+
+      <form class="verdict__form" data-verdict-form novalidate hidden>
+        <div class="verdict__field" data-verdict-field="studentNumber" hidden>
+          <label class="eyebrow" for="verdict-student">Student number</label>
+          <span class="verdict__box">
+            <span class="verdict__prefix" aria-hidden="true">s</span>
+            <input
+              id="verdict-student"
+              name="verdict-student"
+              inputmode="numeric"
+              maxlength="7"
+              placeholder={STUDENT_NUMBER_EXAMPLE}
+              autocomplete="off"
+            />
+          </span>
+          <p class="verdict__error" data-error></p>
+        </div>
+        <div class="verdict__field" data-verdict-field="phone" hidden>
+          <label class="eyebrow" for="verdict-phone">Phone number</label>
+          <span class="verdict__box">
+            <input
+              id="verdict-phone"
+              name="verdict-phone"
+              inputmode="tel"
+              maxlength="12"
+              placeholder={PHONE_EXAMPLE}
+              autocomplete="off"
+            />
+          </span>
+          <p class="verdict__error" data-error></p>
+        </div>
+        <button class="cta rounded-pill" type="submit">Save</button>
+        <p class="verdict__hint eyebrow">Leave it blank if they have none</p>
+      </form>
+
+      <p class="verdict__hint eyebrow" data-verdict-tap>Tap to continue</p>
+    </div>
+  </div>
+
+  <section class="app px-gutter" data-tone="olive" data-step="install" id="app">
+    {
+      /* ---- install it first ------------------------------------------------
+         What a browser tab shows, and all it shows. The camera permission,
+         the storage and the offline cache all behave better in an installed
+         app, so the tab's one job is to get it onto the home screen. The
+         script sets data-platform from the phone it is on; the stylesheet
+         shows that platform's steps and hides the rest. */
+    }
+    <div class="step install" id="install" data-platform="other">
+      <Image
+        class="mark"
+        src={clubLogo}
+        alt=""
+        width={200}
+        height={200}
+        loading="eager"
+      />
+      <p class="eyebrow accent">Griffith Hiking Club</p>
+      <h1 class="text-section font-display mt-3 uppercase">Attendance</h1>
+      <p class="text-lead font-serif mt-4 opacity-85">
+        Add it to your home screen to use it.
+      </p>
+
+      <div class="panel mt-8" data-tone="cream">
+        <p class="steps__head eyebrow" data-for="ios">iPhone</p>
+        <ol class="steps" data-for="ios">
+          <li>Tap <strong>Share</strong> in Safari.</li>
+          <li>Tap <strong>Add to Home Screen</strong>.</li>
+          <li>Open <strong>Attendance</strong>.</li>
+        </ol>
+
+        <p class="steps__head eyebrow" data-for="android">Android</p>
+        <ol class="steps" data-for="android">
+          <li>Tap the <strong>three dots</strong> in Chrome.</li>
+          <li>Tap <strong>Install app</strong>.</li>
+          <li>Open <strong>Attendance</strong>.</li>
+        </ol>
+        {
+          /* Chrome offers a real install prompt through an event. Where it
+             fires, one tap beats three. */
+        }
+        <button
+          class="cta cta--dark rounded-pill mt-6"
+          type="button"
+          data-install-prompt
+          hidden
+        >
+          Install
+        </button>
+
+        <p class="note mt-5" data-for="other">Open this on your phone.</p>
+        <p class="note mt-5" data-installed hidden>
+          Installed. Open it from your home screen.
+        </p>
+      </div>
+    </div>
+
+    {
+      /* ---- which hike ----------------------------------------------------- */
+    }
+    <div class="step hike" id="hike" hidden>
+      <p class="eyebrow accent">Attendance</p>
+      <h1 class="text-section font-display mt-3 uppercase">Which hike?</h1>
+
+      <ul class="panel list mt-8" data-tone="cream">
+        {
+          upcoming.map((event) => {
+            const badge = formatBadge(event);
+            return (
+              <li>
+                <button
+                  class="pick"
+                  type="button"
+                  data-hike={event.id}
+                  data-title={event.title}
+                  data-start={event.start}
+                >
+                  <span class="pick__date">
+                    <span class="pick__day font-display">{badge.day}</span>
+                    <span class="pick__month eyebrow">{badge.month}</span>
+                  </span>
+                  <span class="pick__body">
+                    <span class="pick__title font-serif">{event.title}</span>
+                    <span class="pick__place">{event.place}</span>
+                  </span>
+                  <span class="pick__count eyebrow" data-count-for={event.id} />
+                </button>
+              </li>
+            );
+          })
+        }
+        <li>
+          <button class="pick pick--other" type="button" data-other>
+            <span class="pick__date" aria-hidden="true">
+              <span class="pick__day font-display">+</span>
+            </span>
+            <span class="pick__body">
+              <span class="pick__title font-serif">Something else</span>
+            </span>
+          </button>
+        </li>
+      </ul>
+
+      {
+        /* Rolls still on this phone for hikes that are no longer upcoming, so
+           an old roll can still be exported or cleared. Filled in by the script;
+           stays hidden when there are none. */
+      }
+      <div class="mt-8" data-earlier hidden>
+        <p class="eyebrow opacity-75">Earlier</p>
+        <ul class="panel list mt-3" data-tone="cream" data-earlier-list></ul>
+      </div>
+    </div>
+
+    {
+      /* ---- the scanner ---------------------------------------------------
+         Cream, so the camera and the feed read as a working surface rather
+         than a poster. Fixed height: the head, the camera and the tools stay
+         put and the feed scrolls beneath them. */
+    }
+    <div class="step scanner" id="scanner" data-mode="in" hidden>
+      <header class="scanner__head">
+        <button class="scanner__hike" type="button" data-change-hike>
+          <span class="scanner__title font-serif" data-hike-title></span>
+          <span class="scanner__change eyebrow">Change</span>
+        </button>
+        <p class="scanner__count">
+          <span class="scanner__number font-display" data-count-main>0</span>
+          <span class="eyebrow" data-count-label>in</span>
+        </p>
+      </header>
+
+      {
+        /* Which way people are going. The same scan does both; the switch
+           says which. */
+      }
+      <div class="mode" role="group" aria-label="Checking in or out">
+        <button
+          class="mode__option"
+          type="button"
+          data-mode-set="in"
+          aria-pressed="true">Check in</button
+        >
+        <button
+          class="mode__option"
+          type="button"
+          data-mode-set="out"
+          aria-pressed="false">Check out</button
+        >
+      </div>
+
+      <div class="viewfinder" data-viewfinder>
+        <video class="viewfinder__video" playsinline muted autoplay></video>
+        <div class="viewfinder__frame" aria-hidden="true"></div>
+        <button
+          class="torch"
+          type="button"
+          data-torch
+          aria-pressed="false"
+          aria-label="Torch"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M13 2 4 14h7l-1 8 10-12h-7l1-8z"></path>
+          </svg>
+        </button>
+
+        <div class="viewfinder__pane" data-pane>
+          <button class="cta rounded-pill" type="button" data-camera-start>
+            Start camera
+          </button>
+          <p class="viewfinder__error mt-4" data-camera-error hidden></p>
+        </div>
+      </div>
+
+      <div class="tools">
+        <button class="tool rounded-pill" type="button" data-manual>
+          Add by hand
+        </button>
+        <button class="tool tool--solid rounded-pill" type="button" data-roll>
+          Roll
+        </button>
+      </div>
+
+      {
+        /* The last three records stay visible below the verdict as a quick
+         reference. Older records remain in the roll. */
+      }
+      <ol class="feed" data-feed></ol>
+      <p class="feed__empty note" data-feed-empty>Nobody yet.</p>
+    </div>
+
+    {
+      /* ---- the roll ------------------------------------------------------- */
+    }
+    <div class="step roll" id="roll" hidden>
+      <header>
+        <button class="back caption" type="button" data-back>
+          ← Scanner
+        </button>
+        <h1 class="text-title font-serif mt-4" data-hike-title></h1>
+        <p class="mt-1 opacity-75" data-summary></p>
+      </header>
+
+      <div class="mode mt-6" role="group" aria-label="Show">
+        <button
+          class="mode__option"
+          type="button"
+          data-filter="all"
+          aria-pressed="true">All</button
+        >
+        <button
+          class="mode__option"
+          type="button"
+          data-filter="out"
+          aria-pressed="false">Still out</button
+        >
+      </div>
+
+      <ol class="card list mt-5" data-rows></ol>
+      <p class="note mt-5" data-empty hidden>Nobody.</p>
+
+      <div class="actions mt-8">
+        <button class="cta cta--dark rounded-pill" type="button" data-export>
+          Export CSV
+        </button>
+        <button class="tool tool--quiet rounded-pill" type="button" data-clear>
+          Clear roll
+        </button>
+      </div>
+    </div>
+
+    {
+      /* One row, for both the feed and the roll. The two style it differently
+         and the roll is the only one that shows the remove button. */
+    }
+    <template data-row-template>
+      <li class="row">
+        <div class="row__body">
+          <p class="row__name font-serif" data-name></p>
+          <p class="row__detail" data-detail="studentNumber"></p>
+          <p class="row__detail" data-detail="phone"></p>
+        </div>
+        <div class="row__side">
+          <button class="row__checkout" type="button" data-checkout>
+            Check out
+          </button>
+          <a class="row__call" data-call href="#">Call</a>
+          <p class="row__time" data-time></p>
+        </div>
+      </li>
+    </template>
+
+    <p class="toast" data-toast role="status" hidden>
+      <span data-toast-text></span>
+      <button type="button" data-toast-action hidden></button>
+    </p>
+
+    {
+      /* ---- dialogs -------------------------------------------------------- */
+    }
+    <dialog class="sheet" data-tone="cream" id="manual">
+      <form novalidate>
+        <p class="eyebrow opacity-75" data-manual-title>Add by hand</p>
+        <div class="fields mt-5">
+          <PassField
+            name="first"
+            label="First name"
+            autocomplete="off"
+            required
+          />
+          <PassField
+            name="last"
+            label="Last name"
+            autocomplete="off"
+            required
+          />
+          <PassField
+            name="student"
+            label="Student number"
+            hint={STUDENT_NUMBER_HINT}
+            prefix="s"
+            placeholder={STUDENT_NUMBER_EXAMPLE}
+            inputmode="numeric"
+            maxlength={7}
+            waive={{
+              name: "no-student",
+              label: "Not a current Griffith student",
+            }}
+          />
+          <PassField
+            name="phone"
+            label="Phone number"
+            hint={PHONE_HINT}
+            placeholder={PHONE_EXAMPLE}
+            inputmode="tel"
+            maxlength={12}
+            waive={{ name: "no-phone", label: "No Australian mobile number" }}
+          />
+        </div>
+        <div class="sheet__actions mt-7">
+          <button
+            class="cta cta--dark rounded-pill"
+            type="submit"
+            data-manual-submit
+          >
+            Check in
+          </button>
+          <button
+            class="tool tool--dark rounded-pill"
+            type="button"
+            data-cancel
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="sheet" data-tone="cream" id="fill">
+      <form novalidate>
+        <p class="eyebrow opacity-75" data-fill-for></p>
+        <div class="fields mt-5">
+          <PassField
+            name="fill-student"
+            label="Student number"
+            hint={STUDENT_NUMBER_HINT}
+            prefix="s"
+            placeholder={STUDENT_NUMBER_EXAMPLE}
+            inputmode="numeric"
+            maxlength={7}
+          />
+          <PassField
+            name="fill-phone"
+            label="Phone number"
+            hint={PHONE_HINT}
+            placeholder={PHONE_EXAMPLE}
+            inputmode="tel"
+            maxlength={12}
+          />
+        </div>
+        <div class="sheet__actions mt-7">
+          <button class="cta cta--dark rounded-pill" type="submit">Save</button>
+          <button
+            class="tool tool--dark rounded-pill"
+            type="button"
+            data-cancel
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="sheet" data-tone="cream" id="row-actions">
+      <form method="dialog">
+        <p class="eyebrow opacity-75" data-row-actions-name></p>
+        <div class="sheet__actions mt-7">
+          <button
+            class="cta cta--dark rounded-pill"
+            type="button"
+            data-edit-details
+          >
+            Edit details
+          </button>
+          <button
+            class="tool tool--dark rounded-pill"
+            type="button"
+            data-remove-entry
+          >
+            Remove entry
+          </button>
+          <button class="tool rounded-pill" type="submit" data-cancel>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="sheet" data-tone="cream" id="edit-row">
+      <form novalidate>
+        <p class="eyebrow opacity-75" data-edit-row-name></p>
+        <div class="fields mt-5">
+          <PassField
+            name="edit-first"
+            label="First name"
+            autocomplete="off"
+            required
+          />
+          <PassField
+            name="edit-last"
+            label="Last name"
+            autocomplete="off"
+            required
+          />
+          <PassField
+            name="edit-student"
+            label="Student number"
+            hint={STUDENT_NUMBER_HINT}
+            prefix="s"
+            placeholder={STUDENT_NUMBER_EXAMPLE}
+            inputmode="numeric"
+            maxlength={7}
+          />
+          <PassField
+            name="edit-phone"
+            label="Phone number"
+            hint={PHONE_HINT}
+            placeholder={PHONE_EXAMPLE}
+            inputmode="tel"
+            maxlength={12}
+          />
+        </div>
+        <div class="sheet__actions mt-7">
+          <button class="cta cta--dark rounded-pill" type="submit">Save</button>
+          <button
+            class="tool tool--dark rounded-pill"
+            type="button"
+            data-cancel
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="sheet" data-tone="cream" id="other">
+      <form novalidate>
+        <p class="eyebrow opacity-75">Something else</p>
+        <div class="fields mt-5">
+          <PassField
+            name="other-title"
+            label="What is the hike called?"
+            autocomplete="off"
+            maxlength={60}
+            required
+          />
+        </div>
+        <div class="sheet__actions mt-7">
+          <button class="cta cta--dark rounded-pill" type="submit">Open</button>
+          <button
+            class="tool tool--dark rounded-pill"
+            type="button"
+            data-cancel
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dialog>
+  </section>
+</Base>
+
+<script>
+  import { readPass } from "../../lib/pass/link";
+  import {
+    formatPhone,
+    fullName,
+    nameError,
+    normalisePhone,
+    normaliseStudentNumber,
+    phoneError,
+    registrationErrors,
+    studentNumberError,
+    type Registration,
+    type Waived,
+  } from "../../lib/pass/validation";
+  import { clubToday } from "../../lib/events";
+  import { createStore } from "../../lib/scan/store";
+  import { Feedback, type Signal } from "../../lib/scan/feedback";
+  import {
+    openCamera,
+    readNow,
+    watch,
+    type Camera,
+  } from "../../lib/scan/camera";
+  import {
+    checkIn,
+    checkOut,
+    cooldown,
+    editDetails,
+    fileName,
+    fill,
+    hasGaps,
+    latestFirst,
+    newRoll,
+    otherHikeId,
+    outCount,
+    remove,
+    restore,
+    stillOut,
+    toCsv,
+    type Hike,
+    type Outcome,
+    type Roll,
+    type Row,
+  } from "../../lib/scan/roll";
+
+  const app = document.getElementById("app")!;
+  const $ = <T extends Element = HTMLElement>(
+    selector: string,
+    root: ParentNode = app,
+  ) => root.querySelector<T>(selector)!;
+  const $$ = <T extends Element = HTMLElement>(
+    selector: string,
+    root: ParentNode = app,
+  ) => [...root.querySelectorAll<T>(selector)];
+
+  const store = createStore(localStorage);
+  const feedback = new Feedback();
+
+  /* ---- state ------------------------------------------------------------- */
+
+  type Step = "install" | "hike" | "scan" | "roll";
+  type Mode = "in" | "out";
+  type Filter = "all" | "out";
+
+  let roll: Roll | null = null;
+  let mode: Mode = "in";
+  let filter: Filter = "all";
+  let camera: Camera | null = null;
+  let stopWatching: (() => void) | null = null;
+  let torchOn = false;
+  /** The row at the top of the feed: the one just scanned. */
+  let latestId: string | null = null;
+
+  const steps: Record<Step, HTMLElement> = {
+    install: $("#install"),
+    hike: $("#hike"),
+    scan: $("#scanner"),
+    roll: $("#roll"),
+  };
+
+  /** The two working screens are cream; the two that come before are olive.
+   *  The body follows, because iOS tints its chrome from the body. */
+  const show = (step: Step) => {
+    app.dataset.step = step;
+    for (const [name, el] of Object.entries(steps)) el.hidden = name !== step;
+    const working = step === "scan" || step === "roll";
+    app.dataset.tone = working ? "cream" : "olive";
+    document.body.dataset.surface = working ? "cream" : "olive";
+    if (step === "hike") renderPicker();
+    if (step === "roll") renderRoll();
+    if (step === "scan") void resumeCamera();
+    else stopCamera();
+    window.scrollTo({ top: 0 });
+  };
+
+  const save = () => {
+    if (roll && !store.saveRoll(roll)) {
+      toast("This phone is not saving the roll. Export it before you close.");
+    }
+  };
+
+  const renderCounts = () => {
+    if (!roll) return;
+    const inN = roll.rows.length;
+    const outN = outCount(roll);
+    $("[data-count-main]").textContent = String(mode === "in" ? inN : outN);
+    $("[data-count-label]").textContent =
+      mode === "in" ? "in" : `of ${inN} out`;
+    $("[data-summary]").textContent =
+      outN === 0 ? `${inN} in` : `${inN} in · ${outN} out`;
+  };
+
+  const renderTitle = () => {
+    for (const el of $$("[data-hike-title]"))
+      el.textContent = roll?.hike.title ?? "";
+  };
+
+  const openHike = (hike: Hike, step: Step = "scan") => {
+    roll = store.loadRoll(hike.id) ?? newRoll(hike);
+    store.setCurrentHike(hike.id);
+    latestId = null;
+    setMode("in");
+    renderTitle();
+    renderCounts();
+    renderFeed();
+    show(step);
+  };
+
+  /* ---- toast --------------------------------------------------------------- */
+
+  const toastEl = $("[data-toast]");
+  const toastText = $("[data-toast-text]");
+  const toastAction = $<HTMLButtonElement>("[data-toast-action]");
+  let toastTimer = 0;
+  let onToastAction: (() => void) | null = null;
+
+  const toast = (
+    message: string,
+    action?: { label: string; run: () => void },
+  ) => {
+    toastText.textContent = message;
+    onToastAction = action?.run ?? null;
+    toastAction.textContent = action?.label ?? "";
+    toastAction.hidden = !action;
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(
+      () => {
+        toastEl.hidden = true;
+      },
+      action ? 6000 : 3000,
+    );
+  };
+
+  toastAction.addEventListener("click", () => {
+    onToastAction?.();
+    toastEl.hidden = true;
+  });
+
+  const fieldError = (input: HTMLInputElement, message: string | null) => {
+    const box = input.closest(".field")!;
+    box.querySelector("[data-error]")!.textContent = message ?? "";
+    input.setAttribute("aria-invalid", message ? "true" : "false");
+  };
+
+  /* ---- which hike --------------------------------------------------------- */
+
+  const picks = $$<HTMLButtonElement>("[data-hike]");
+  const earlier = $("[data-earlier]");
+  const earlierList = $("[data-earlier-list]");
+
+  const renderPicker = () => {
+    const rolls = store.listRolls();
+    const upcomingIds = new Set(picks.map((b) => b.dataset.hike));
+
+    for (const el of $$("[data-count-for]")) {
+      const found = rolls.find((r) => r.hike.id === el.dataset.countFor);
+      el.textContent = found?.rows.length ? `${found.rows.length} in` : "";
+    }
+
+    const old = rolls.filter((r) => !upcomingIds.has(r.hike.id));
+    earlier.hidden = old.length === 0;
+    earlierList.replaceChildren(
+      ...old.map((r) => {
+        const li = document.createElement("li");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "pick pick--earlier";
+        button.innerHTML = `<span class="pick__body"><span class="pick__title font-serif"></span><span class="pick__place"></span></span><span class="pick__count eyebrow"></span>`;
+        button.querySelector(".pick__title")!.textContent = r.hike.title;
+        button.querySelector(".pick__place")!.textContent = r.hike.start ?? "";
+        button.querySelector(".pick__count")!.textContent =
+          `${r.rows.length} in`;
+        button.addEventListener("click", () => openHike(r.hike, "roll"));
+        li.append(button);
+        return li;
+      }),
+    );
+  };
+
+  for (const button of picks) {
+    button.addEventListener("click", () => {
+      const { hike: id, title, start } = button.dataset;
+      openHike({ id: id!, title: title!, start: start || undefined });
+    });
+  }
+
+  const otherDialog = $<HTMLDialogElement>("#other");
+  const otherTitle = $<HTMLInputElement>('[name="other-title"]');
+
+  $("[data-other]").addEventListener("click", () => {
+    otherTitle.value = "";
+    fieldError(otherTitle, null);
+    otherDialog.showModal();
+  });
+
+  otherDialog.querySelector("form")!.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const title = otherTitle.value.trim();
+    const error = nameError(title, "hike's name");
+    if (error) {
+      fieldError(otherTitle, error);
+      return;
+    }
+    otherDialog.close();
+    openHike({ id: otherHikeId(title), title });
+  });
+
+  /* ---- in or out ---------------------------------------------------------- */
+
+  const scanner = steps.scan;
+  const manualSubmit = $("[data-manual-submit]");
+  const manualTitle = $("[data-manual-title]");
+
+  const setMode = (next: Mode) => {
+    mode = next;
+    scanner.dataset.mode = next;
+    for (const b of $$<HTMLButtonElement>("[data-mode-set]", scanner)) {
+      b.setAttribute("aria-pressed", String(b.dataset.modeSet === next));
+    }
+    manualSubmit.textContent = next === "in" ? "Check in" : "Check out";
+    manualTitle.textContent =
+      next === "in" ? "Add by hand" : "Check out by hand";
+    renderCounts();
+  };
+
+  for (const b of $$<HTMLButtonElement>("[data-mode-set]", scanner)) {
+    b.addEventListener("click", () => setMode(b.dataset.modeSet as Mode));
+  }
+
+  /* ---- the camera --------------------------------------------------------- */
+
+  const video = $<HTMLVideoElement>("video");
+  const pane = $("[data-pane]");
+  const cameraError = $("[data-camera-error]");
+  const torch = $<HTMLButtonElement>("[data-torch]");
+  const startButton = $<HTMLButtonElement>("[data-camera-start]");
+  let cameraStarting: Promise<void> | null = null;
+  let cameraStartToken = 0;
+
+  const fresh = cooldown(4000);
+
+  const stopCamera = () => {
+    cameraStartToken++;
+    stopWatching?.();
+    stopWatching = null;
+    camera?.stop();
+    camera = null;
+    torchOn = false;
+    torch.hidden = true;
+    torch.setAttribute("aria-pressed", "false");
+    startButton.disabled = false;
+    startButton.textContent = "Start camera";
+    pane.hidden = false;
+  };
+
+  /** Why the camera did not open, in words a leader can act on. Phones hide
+   *  the whole camera API on plain HTTP, which is the usual reason during
+   *  development, and a refused permission sticks until it is changed in the
+   *  phone's settings. */
+  const explain = (error: unknown): string => {
+    if (!navigator.mediaDevices) {
+      return "This address is not HTTPS, so the browser hides the camera.";
+    }
+    if (error instanceof DOMException) {
+      switch (error.name) {
+        case "NotAllowedError":
+          return "The camera was refused. Allow it for Attendance in your phone's settings.";
+        case "NotFoundError":
+          return "No camera on this device.";
+        case "NotReadableError":
+          return "Another app has the camera.";
+        default:
+          return `The camera could not be opened (${error.name}).`;
+      }
+    }
+    return "The camera could not be opened.";
+  };
+
+  const canRetryCamera = (error: unknown): boolean =>
+    error instanceof DOMException &&
+    ["AbortError", "InvalidStateError", "NotReadableError"].includes(
+      error.name,
+    );
+
+  const wait = (milliseconds: number) =>
+    new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+
+  /** iOS can briefly retain the old camera stream after a PWA is force-closed.
+   *  Give the OS a moment to release it before showing the error. */
+  const openCameraWithRetry = async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await openCamera(video);
+      } catch (error) {
+        if (!canRetryCamera(error) || attempt === 2) throw error;
+        await wait(250 * (attempt + 1));
+      }
+    }
+    throw new Error("The camera could not be opened.");
+  };
+
+  const startCamera = async () => {
+    if (camera || cameraStarting) return cameraStarting;
+
+    const startToken = ++cameraStartToken;
+    cameraStarting = (async () => {
+      cameraError.hidden = true;
+      startButton.disabled = true;
+      try {
+        camera = await openCameraWithRetry();
+      } catch (error) {
+        cameraError.textContent = explain(error);
+        cameraError.hidden = false;
+        startButton.disabled = false;
+        startButton.textContent = "Try again";
+        return;
+      }
+      if (
+        startToken !== cameraStartToken ||
+        document.hidden ||
+        app.dataset.step !== "scan"
+      ) {
+        camera.stop();
+        camera = null;
+        startButton.disabled = false;
+        return;
+      }
+      pane.hidden = true;
+      startButton.disabled = false;
+      startButton.textContent = "Start camera";
+      torch.hidden = !camera.hasTorch;
+      stopWatching = watch(video, onCode);
+    })();
+
+    try {
+      await cameraStarting;
+    } finally {
+      cameraStarting = null;
+    }
+  };
+
+  /** Coming onto the scanner: open the camera without a tap where the phone
+   *  has already said yes, and show the button where it has not or where the
+   *  browser will not say. */
+  const resumeCamera = async () => {
+    if (camera) return;
+    try {
+      const status = await navigator.permissions.query({
+        name: "camera" as PermissionName,
+      });
+      if (status.state === "granted") await startCamera();
+    } catch {
+      // Safari has no camera entry in the permissions API. The button waits.
+    }
+  };
+
+  $("[data-camera-start]").addEventListener("click", () => {
+    feedback.arm();
+    void startCamera();
+  });
+
+  $("[data-viewfinder]").addEventListener("click", (event) => {
+    if (!camera || (event.target as Element).closest("[data-torch]")) return;
+    void readNow(video).then((codes) => {
+      for (const code of codes) onCode(code, true);
+    });
+  });
+
+  // Audio needs a tap first. Any tap will do.
+  document.addEventListener("pointerdown", () => feedback.arm(), {
+    once: true,
+  });
+
+  torch.addEventListener("click", async () => {
+    if (!camera) return;
+    torchOn = !torchOn;
+    try {
+      await camera.setTorch(torchOn);
+      torch.setAttribute("aria-pressed", String(torchOn));
+    } catch {
+      torchOn = false;
+    }
+  });
+
+  /* A phone put in a pocket, or switched to a message, gives its camera back.
+   * Coming back to a running scanner restarts it without a tap. */
+  let wasScanning = false;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      wasScanning = camera !== null || cameraStarting !== null;
+      stopCamera();
+    } else if (wasScanning && app.dataset.step === "scan") {
+      void startCamera();
+    }
+  });
+
+  /* ---- the verdict ------------------------------------------------------------ */
+
+  const verdict = $("[data-verdict]", document);
+  const verdictForm = $<HTMLFormElement>("[data-verdict-form]", verdict);
+  const verdictTap = $("[data-verdict-tap]", verdict);
+  const verdictStudent = $<HTMLInputElement>(
+    '[name="verdict-student"]',
+    verdict,
+  );
+  const verdictPhone = $<HTMLInputElement>('[name="verdict-phone"]', verdict);
+  /** The row the open verdict is about, when a number can be added to it. */
+  let verdictRow: Row | null = null;
+  let verdictOpen = false;
+
+  interface Verdict {
+    signal: Signal;
+    kind: string;
+    name: string;
+    detail: string;
+    /** Offer the fields for whatever this row is missing. */
+    fill?: Row;
+  }
+
+  const showVerdict = ({ signal, kind, name, detail, fill }: Verdict) => {
+    verdict.dataset.signal = signal;
+    $("[data-verdict-kind]", verdict).textContent = kind;
+    $("[data-verdict-name]", verdict).textContent = name;
+    $("[data-verdict-detail]", verdict).textContent = detail;
+
+    verdictRow = fill && hasGaps(fill) ? fill : null;
+    verdictForm.hidden = !verdictRow;
+    verdictTap.hidden = Boolean(verdictRow);
+    if (verdictRow) {
+      const needStudent = !verdictRow.studentNumber;
+      const needPhone = !verdictRow.phone;
+      $('[data-verdict-field="studentNumber"]', verdict).hidden = !needStudent;
+      $('[data-verdict-field="phone"]', verdict).hidden = !needPhone;
+      verdictStudent.value = "";
+      verdictPhone.value = "";
+      fieldErrorIn(verdictStudent, null);
+      fieldErrorIn(verdictPhone, null);
+    }
+
+    verdictOpen = true;
+    verdict.hidden = false;
+    feedback.play(signal);
+    if (verdictRow) {
+      (verdictRow.studentNumber ? verdictPhone : verdictStudent).focus();
+    }
+  };
+
+  const hideVerdict = () => {
+    verdictOpen = false;
+    verdictRow = null;
+    verdict.hidden = true;
+  };
+
+  /** The verdict's own fields sit outside a PassField, so the error goes on the
+   *  sibling paragraph rather than the field wrapper. */
+  const fieldErrorIn = (input: HTMLInputElement, message: string | null) => {
+    const box = input.closest(".verdict__field")!;
+    box.querySelector("[data-error]")!.textContent = message ?? "";
+    input.setAttribute("aria-invalid", message ? "true" : "false");
+  };
+
+  // A tap anywhere but on the form puts it away.
+  verdict.addEventListener("click", (event) => {
+    if ((event.target as Element).closest("[data-verdict-form]")) return;
+    hideVerdict();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && verdictOpen) hideVerdict();
+  });
+
+  verdictStudent.addEventListener("input", () => {
+    verdictStudent.value = verdictStudent.value.replace(/\D/g, "").slice(0, 7);
+  });
+
+  verdictPhone.addEventListener("input", () => {
+    verdictPhone.value = formatPhone(
+      normalisePhone(verdictPhone.value).replace(/\D/g, ""),
+    );
+  });
+
+  /** Save what was typed. A field left blank is a hiker who has none, which is
+   *  allowed; a field with something wrong in it is not. */
+  verdictForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!roll || !verdictRow) return;
+
+    const studentRaw = verdictStudent.value.trim();
+    const phoneRaw = verdictPhone.value.trim();
+    const student = studentRaw ? normaliseStudentNumber(`s${studentRaw}`) : "";
+    const phone = phoneRaw ? normalisePhone(phoneRaw) : "";
+
+    const studentError =
+      !verdictRow.studentNumber && student ? studentNumberError(student) : null;
+    const phoneError_ = !verdictRow.phone && phone ? phoneError(phone) : null;
+    fieldErrorIn(verdictStudent, studentError);
+    fieldErrorIn(verdictPhone, phoneError_);
+    if (studentError || phoneError_) {
+      (studentError ? verdictStudent : verdictPhone).focus();
+      return;
+    }
+
+    let next = roll;
+    if (!verdictRow.studentNumber && student)
+      next = fill(next, verdictRow.id, "studentNumber", student);
+    if (!verdictRow.phone && phone)
+      next = fill(next, verdictRow.id, "phone", phone);
+    roll = next;
+    save();
+    hideVerdict();
+    renderFeed();
+    renderRoll();
+  });
+
+  const time = new Intl.DateTimeFormat("en-AU", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const clock = (iso: string) => time.format(new Date(iso));
+
+  /* ---- a read ---------------------------------------------------------------- */
+
+  const onCode = (raw: string, forced = false) => {
+    // Codes seen while a verdict is up still count as seen, so the pass that
+    // is still being held to the camera when it closes is not read again.
+    const isFresh = fresh(raw, performance.now());
+    if (!roll || verdictOpen || (!forced && !isFresh)) return;
+
+    let registration: Registration;
+    try {
+      registration = readPass(raw);
+    } catch {
+      registration = null as unknown as Registration;
+    }
+
+    // A pass with no name on it is not one of ours, whatever its origin says.
+    if (
+      !registration ||
+      nameError(registration.firstName, "first name") ||
+      nameError(registration.lastName, "last name")
+    ) {
+      showVerdict({
+        signal: "stop",
+        kind: "Not recognised",
+        name: "Not a trail pass",
+        detail: "That code is not from the club's site.",
+      });
+      return;
+    }
+
+    record(registration, "scan");
+  };
+
+  /** Add someone, or mark them back, depending on the switch, and tell the
+   *  leader what happened with a colour, a sound and a card at the top. */
+  const record = (
+    registration: Registration,
+    how: "scan" | "hand",
+    forcedMode?: Mode,
+  ) => {
+    if (!roll) return;
+    const at = new Date();
+    const next =
+      (forcedMode ?? mode) === "in"
+        ? checkIn(roll, registration, { at, how })
+        : checkOut(roll, registration, { at, how });
+    roll = next.roll;
+    const outcome: Outcome = next.outcome;
+    // A repeat leaves the top card where it is; the toast says who it was.
+    const changed = outcome.kind !== "repeat" && outcome.kind !== "already-out";
+    if (changed) latestId = outcome.row.id;
+
+    const row = outcome.row;
+    const name = fullName(row);
+    const numbers = [row.studentNumber, row.phone && formatPhone(row.phone)]
+      .filter(Boolean)
+      .join(" · ");
+
+    switch (outcome.kind) {
+      case "added":
+        save();
+        showVerdict(
+          hasGaps(row)
+            ? {
+                signal: "stop",
+                kind: "Checked in, missing a number",
+                name,
+                detail: numbers,
+                fill: row,
+              }
+            : { signal: "go", kind: "Checked in", name, detail: numbers },
+        );
+        break;
+      case "out":
+        save();
+        showVerdict(
+          hasGaps(row)
+            ? {
+                signal: "go",
+                kind: "Checked out, missing a number",
+                name,
+                detail: `In ${clock(row.at)}`,
+              }
+            : {
+                signal: "go",
+                kind: "Checked out",
+                name,
+                detail: `In ${clock(row.at)} · Out ${clock(row.outAt!)}`,
+              },
+        );
+        break;
+      case "out-unknown":
+        save();
+        showVerdict({
+          signal: "stop",
+          kind: "Never checked in",
+          name,
+          detail: "Added to the roll and checked out.",
+        });
+        break;
+      case "repeat":
+        showVerdict({
+          signal: "wait",
+          kind: "Already in",
+          name,
+          detail: `Checked in at ${clock(row.at)}`,
+        });
+        break;
+      case "already-out":
+        showVerdict({
+          signal: "wait",
+          kind: "Already checked in and out",
+          name,
+          detail: `Checked out at ${clock(row.outAt!)}`,
+        });
+        break;
+    }
+
+    renderCounts();
+    renderFeed(changed);
+    if (app.dataset.step === "roll") renderRoll();
+  };
+
+  /* ---- rows -------------------------------------------------------------------- */
+
+  const rowTemplate = $<HTMLTemplateElement>("[data-row-template]");
+
+  const detail = (
+    el: HTMLElement,
+    row: Row,
+    field: "studentNumber" | "phone",
+    allowAdd = true,
+  ) => {
+    const value = row[field];
+    el.replaceChildren();
+    if (value) {
+      el.textContent = field === "phone" ? formatPhone(value) : value;
+      return;
+    }
+    const gap = document.createElement("span");
+    gap.className = "gap";
+    gap.textContent = field === "phone" ? "No phone" : "No student number";
+    if (!allowAdd) {
+      el.append(gap);
+      return;
+    }
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "add";
+    add.textContent = "Add";
+    add.addEventListener("click", () => openFill(row, field));
+    el.append(gap, " ", add);
+  };
+
+  const when = (row: Row): string =>
+    row.outAt
+      ? `In ${clock(row.at)} · Out ${clock(row.outAt)}`
+      : `In ${clock(row.at)}`;
+
+  const rowActionsDialog = $<HTMLDialogElement>("#row-actions");
+  const rowActionsName = $("[data-row-actions-name]", rowActionsDialog);
+  const editRowDialog = $<HTMLDialogElement>("#edit-row");
+  const editRowName = $("[data-edit-row-name]", editRowDialog);
+  const editFirst = $<HTMLInputElement>('[name="edit-first"]');
+  const editLast = $<HTMLInputElement>('[name="edit-last"]');
+  const editStudent = $<HTMLInputElement>('[name="edit-student"]');
+  const editPhone = $<HTMLInputElement>('[name="edit-phone"]');
+  let actionRow: Row | null = null;
+
+  const openRowActions = (row: Row) => {
+    actionRow = row;
+    rowActionsName.textContent = fullName(row);
+    rowActionsDialog.showModal();
+  };
+
+  const openEditRow = () => {
+    if (!actionRow) return;
+    editRowName.textContent = fullName(actionRow);
+    editFirst.value = actionRow.firstName;
+    editLast.value = actionRow.lastName;
+    editStudent.value = actionRow.studentNumber.replace(/^s/, "");
+    editPhone.value = formatPhone(actionRow.phone);
+    fieldError(editFirst, null);
+    fieldError(editLast, null);
+    fieldError(editStudent, null);
+    fieldError(editPhone, null);
+    rowActionsDialog.close();
+    editRowDialog.showModal();
+    editStudent.focus();
+  };
+
+  $("[data-edit-details]", rowActionsDialog).addEventListener(
+    "click",
+    openEditRow,
+  );
+  $("[data-remove-entry]", rowActionsDialog).addEventListener("click", () => {
+    if (!actionRow) return;
+    const row = actionRow;
+    if (
+      !confirm(
+        `Remove ${fullName(row)} from the roll? This cannot be undone from the app.`,
+      )
+    )
+      return;
+    rowActionsDialog.close();
+    actionRow = null;
+    removeRow(row);
+  });
+
+  editStudent.addEventListener("input", () => {
+    editStudent.value = editStudent.value.replace(/\D/g, "").slice(0, 7);
+  });
+  editPhone.addEventListener("input", () => {
+    editPhone.value = formatPhone(
+      normalisePhone(editPhone.value).replace(/\D/g, ""),
+    );
+  });
+  editRowDialog.querySelector("form")!.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!actionRow || !roll) return;
+
+    const firstName = editFirst.value.trim();
+    const lastName = editLast.value.trim();
+    const student = editStudent.value.trim()
+      ? normaliseStudentNumber(`s${editStudent.value.trim()}`)
+      : "";
+    const phone = editPhone.value.trim() ? normalisePhone(editPhone.value) : "";
+    const firstError = nameError(firstName, "first name");
+    const lastError = nameError(lastName, "last name");
+    const studentError = student ? studentNumberError(student) : null;
+    const phoneError_ = phone ? phoneError(phone) : null;
+    fieldError(editFirst, firstError);
+    fieldError(editLast, lastError);
+    fieldError(editStudent, studentError);
+    fieldError(editPhone, phoneError_);
+    if (firstError || lastError || studentError || phoneError_) return;
+
+    roll = editDetails(roll, actionRow.id, {
+      firstName,
+      lastName,
+      studentNumber: student,
+      phone,
+    });
+    save();
+    editRowDialog.close();
+    actionRow = null;
+    renderFeed();
+    renderRoll();
+  });
+
+  const rowElement = (
+    row: Row,
+    view: "feed" | "roll" = "feed",
+  ): HTMLElement => {
+    const li = (rowTemplate.content.cloneNode(true) as DocumentFragment)
+      .firstElementChild as HTMLElement;
+    li.dataset.id = row.id;
+    li.querySelector("[data-name]")!.textContent = fullName(row);
+    li.querySelector("[data-time]")!.textContent = when(row);
+    detail(
+      li.querySelector('[data-detail="studentNumber"]')!,
+      row,
+      "studentNumber",
+      view === "feed",
+    );
+    detail(
+      li.querySelector('[data-detail="phone"]')!,
+      row,
+      "phone",
+      view === "feed",
+    );
+    li.classList.toggle("row--gap", hasGaps(row));
+    li.classList.toggle("row--out", Boolean(row.outAt));
+    li.classList.toggle("row--latest", row.id === latestId);
+    const checkout = $<HTMLButtonElement>("[data-checkout]", li);
+    const call = $<HTMLAnchorElement>("[data-call]", li);
+    checkout.hidden = view !== "roll" || Boolean(row.outAt);
+    call.hidden = view !== "roll" || !row.phone;
+    call.href = row.phone ? `tel:${row.phone}` : "#";
+    if (view === "roll") {
+      checkout.addEventListener("click", (event) => {
+        event.stopPropagation();
+        record(row, "hand", "out");
+      });
+      call.addEventListener("click", (event) => event.stopPropagation());
+      li.addEventListener("click", () => openRowActions(row));
+    }
+    return li;
+  };
+
+  const removeRow = (row: Row) => {
+    if (!roll) return;
+    roll = remove(roll, row.id);
+    if (latestId === row.id) latestId = null;
+    save();
+    renderCounts();
+    renderFeed();
+    renderRoll();
+    toast(`Removed ${fullName(row)}`, {
+      label: "Undo",
+      run: () => {
+        if (!roll) return;
+        roll = restore(roll, row);
+        save();
+        renderCounts();
+        renderFeed();
+        renderRoll();
+      },
+    });
+  };
+
+  /* ---- the feed ---------------------------------------------------------------- */
+
+  const feed = $("[data-feed]");
+  const feedEmpty = $("[data-feed-empty]");
+
+  /** Keep the last three records in the quick-reference stack. A dropped
+   *  fourth card gets a short exit animation before it leaves. */
+  const renderFeed = (arrived = false) => {
+    if (!roll) return;
+    const rows = latestFirst(roll).slice(0, 3);
+    const nextIds = new Set(rows.map((row) => row.id));
+    const departing = [...feed.children].filter(
+      (el) => !nextIds.has(el.getAttribute("data-id") ?? ""),
+    );
+    const elements = rows.map((row) => rowElement(row));
+
+    feed.querySelectorAll(".row--leave").forEach((el) => el.remove());
+    feed.replaceChildren(...elements);
+    if (arrived && elements[0]) elements[0].classList.add("row--enter");
+
+    for (const old of departing) {
+      const leaving = old.cloneNode(true) as HTMLElement;
+      leaving.classList.add("row--leave");
+      feed.append(leaving);
+      window.setTimeout(() => leaving.remove(), 300);
+    }
+
+    feedEmpty.hidden = elements.length > 0;
+  };
+
+  /* ---- filling a gap ------------------------------------------------------------ */
+
+  const fillDialog = $<HTMLDialogElement>("#fill");
+  const fillFor = $("[data-fill-for]");
+  const fillStudent = $<HTMLInputElement>('[name="fill-student"]');
+  const fillPhone = $<HTMLInputElement>('[name="fill-phone"]');
+  let filling: { row: Row; field: "studentNumber" | "phone" } | null = null;
+
+  const openFill = (row: Row, field: "studentNumber" | "phone") => {
+    filling = { row, field };
+    fillFor.textContent = fullName(row);
+    const student = field === "studentNumber";
+    fillStudent.closest(".field")!.toggleAttribute("hidden", !student);
+    fillPhone.closest(".field")!.toggleAttribute("hidden", student);
+    fillStudent.value = "";
+    fillPhone.value = "";
+    fieldError(fillStudent, null);
+    fieldError(fillPhone, null);
+    fillDialog.showModal();
+    (student ? fillStudent : fillPhone).focus();
+  };
+
+  fillDialog.querySelector("form")!.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!filling || !roll) return;
+
+    const { row, field } = filling;
+    const student = field === "studentNumber";
+    const input = student ? fillStudent : fillPhone;
+    const value = student
+      ? normaliseStudentNumber(`s${input.value.trim()}`)
+      : normalisePhone(input.value);
+    const error = student ? studentNumberError(value) : phoneError(value);
+    if (error) {
+      fieldError(input, error);
+      input.focus();
+      return;
+    }
+
+    roll = fill(roll, row.id, field, value);
+    save();
+    fillDialog.close();
+    filling = null;
+    renderFeed();
+    renderRoll();
+    toast("Saved");
+  });
+
+  /* ---- adding by hand ------------------------------------------------------------ */
+
+  const manualDialog = $<HTMLDialogElement>("#manual");
+  const manualForm = manualDialog.querySelector("form")!;
+  const manual = (name: string) =>
+    manualForm.querySelector<HTMLInputElement>(`[name="${name}"]`)!;
+
+  const OPTIONAL = [
+    { box: "no-student", input: "student", key: "studentNumber" },
+    { box: "no-phone", input: "phone", key: "phone" },
+  ] as const;
+
+  const syncOptional = () => {
+    for (const { box, input } of OPTIONAL) {
+      const off = manual(box).checked;
+      const target = manual(input);
+      target.disabled = off;
+      if (off) {
+        target.value = "";
+        fieldError(target, null);
+      }
+      target.closest(".field")!.classList.toggle("field--off", off);
+    }
+  };
+
+  for (const { box } of OPTIONAL) {
+    manual(box).addEventListener("change", syncOptional);
+  }
+
+  manual("phone").addEventListener("input", (event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    input.value = formatPhone(normalisePhone(input.value).replace(/\D/g, ""));
+  });
+
+  for (const input of [manual("student"), fillStudent]) {
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/\D/g, "").slice(0, 7);
+    });
+  }
+
+  fillPhone.addEventListener("input", () => {
+    fillPhone.value = formatPhone(
+      normalisePhone(fillPhone.value).replace(/\D/g, ""),
+    );
+  });
+
+  $("[data-manual]").addEventListener("click", () => {
+    manualForm.reset();
+    for (const name of ["first", "last", "student", "phone"])
+      fieldError(manual(name), null);
+    syncOptional();
+    manualDialog.showModal();
+    manual("first").focus();
+  });
+
+  manualForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const student = manual("student").value.trim();
+    const phone = manual("phone").value.trim();
+    const registration: Registration = {
+      firstName: manual("first").value.trim(),
+      lastName: manual("last").value.trim(),
+      studentNumber: student ? normaliseStudentNumber(`s${student}`) : "",
+      phone: phone ? normalisePhone(phone) : "",
+    };
+    const waived: Waived = Object.fromEntries(
+      OPTIONAL.map(({ box, key }) => [key, manual(box).checked]),
+    );
+    const errors = registrationErrors(registration, waived);
+
+    const FIELDS = [
+      ["first", "firstName"],
+      ["last", "lastName"],
+      ["student", "studentNumber"],
+      ["phone", "phone"],
+    ] as const;
+    for (const [name, key] of FIELDS) fieldError(manual(name), errors[key]);
+    const wrong = FIELDS.find(([, key]) => errors[key] !== null);
+    if (wrong) {
+      manual(wrong[0]).focus();
+      return;
+    }
+
+    manualDialog.close();
+    record(registration, "hand");
+  });
+
+  for (const button of $$<HTMLButtonElement>("[data-cancel]")) {
+    button.addEventListener("click", () => button.closest("dialog")!.close());
+  }
+
+  /* ---- the roll ------------------------------------------------------------- */
+
+  const rows = $("[data-rows]");
+  const empty = $("[data-empty]");
+
+  const renderRoll = () => {
+    if (!roll) return;
+    const chosen = filter === "out" ? stillOut(roll) : roll.rows;
+    const ordered = latestFirst({ ...roll, rows: chosen }).map((row) =>
+      rowElement(row, "roll"),
+    );
+    rows.replaceChildren(...ordered);
+    rows.hidden = ordered.length === 0;
+    empty.hidden = ordered.length > 0;
+    empty.textContent = filter === "out" ? "Everyone is back." : "Nobody yet.";
+  };
+
+  for (const b of $$<HTMLButtonElement>("[data-filter]")) {
+    b.addEventListener("click", () => {
+      filter = b.dataset.filter as Filter;
+      for (const other of $$<HTMLButtonElement>("[data-filter]")) {
+        other.setAttribute("aria-pressed", String(other === b));
+      }
+      renderRoll();
+    });
+  }
+
+  $("[data-roll]").addEventListener("click", () => show("roll"));
+  $("[data-back]").addEventListener("click", () => show("scan"));
+  $("[data-change-hike]").addEventListener("click", () => show("hike"));
+
+  $("[data-export]").addEventListener("click", async () => {
+    if (!roll) return;
+    const name = fileName(roll, clubToday(new Date()));
+    const file = new File([toCsv(roll)], name, { type: "text/csv" });
+
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: roll.hike.title });
+        toast("Exported");
+      } catch {
+        // The share sheet was dismissed. Nothing to say.
+      }
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Downloaded");
+  });
+
+  $("[data-clear]").addEventListener("click", () => {
+    if (!roll) return;
+    const n = roll.rows.length;
+    if (
+      n > 0 &&
+      !confirm(
+        `Clear the roll for ${roll.hike.title}? ${n} ${n === 1 ? "name" : "names"} will be deleted from this phone.`,
+      )
+    )
+      return;
+    store.deleteRoll(roll.hike.id);
+    roll = newRoll(roll.hike);
+    latestId = null;
+    renderCounts();
+    renderFeed();
+    renderRoll();
+    toast("Cleared");
+  });
+
+  /* ---- the app ---------------------------------------------------------------- */
+
+  if (import.meta.env.PROD && "serviceWorker" in navigator) {
+    // The page is under /scan/, but Astro's JS and CSS assets live at /_astro/.
+    // The worker needs root scope to serve those assets offline too.
+    void navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  }
+
+  /* Installed, or a tab? The display mode is what the manifest asked for once
+   * the app is on a home screen; iOS Safari also says so through its own
+   * `navigator.standalone`. In development `?app` opens the app in a tab, since
+   * nobody installs a dev server. */
+  const installed =
+    matchMedia("(display-mode: standalone)").matches ||
+    (navigator as { standalone?: boolean }).standalone === true ||
+    (import.meta.env.DEV && new URLSearchParams(location.search).has("app"));
+
+  /** Chrome's install prompt, which the DOM types do not know about. */
+  interface InstallPrompt extends Event {
+    prompt: () => Promise<unknown>;
+  }
+
+  if (!installed) {
+    const ua = navigator.userAgent;
+    // An iPad on iPadOS 13+ claims to be a Mac; the touch points give it away.
+    const ios =
+      /iPhone|iPad|iPod/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const android = /Android/.test(ua);
+    steps.install.dataset.platform = ios
+      ? "ios"
+      : android
+        ? "android"
+        : "other";
+
+    const installButton = $<HTMLButtonElement>("[data-install-prompt]");
+    let prompt: InstallPrompt | null = null;
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      prompt = event as InstallPrompt;
+      installButton.hidden = false;
+    });
+    installButton.addEventListener("click", () => void prompt?.prompt());
+    window.addEventListener("appinstalled", () => {
+      installButton.hidden = true;
+      $("[data-installed]").hidden = false;
+    });
+
+    show("install");
+  } else {
+    // Ask the browser to keep the rolls through a storage cleanup. Best
+    // effort: the answer is not worth stopping for.
+    void navigator.storage?.persist?.();
+    const current = store.currentHike();
+    const remembered = current ? store.loadRoll(current) : null;
+    if (remembered) openHike(remembered.hike);
+    else show("hike");
+  }
+</script>
+
+<style>
+  /* ---- page ------------------------------------------------------------- */
+  .app {
+    --measure: 27rem;
+
+    min-height: 100svh;
+    padding-block: var(--spacing-gutter-block);
+    display: grid;
+    align-content: start;
+    justify-items: center;
+  }
+
+  .step {
+    width: 100%;
+    max-width: var(--measure);
+  }
+
+  /* Scoped rules would otherwise beat preflight's [hidden]. */
+  .app [hidden] {
+    display: none !important;
+  }
+
+  .accent {
+    color: var(--tone-accent);
+  }
+
+  .mark {
+    width: clamp(4rem, 14vw, 5.5rem);
+    height: auto;
+    margin-bottom: 1.5rem;
+    border-radius: 50%;
+    mix-blend-mode: screen;
+  }
+
+  .note {
+    font-size: var(--text-eyebrow);
+    line-height: 1.5;
+    opacity: 0.7;
+  }
+
+  /* A raised cream sheet on an olive page. */
+  .panel {
+    border-radius: var(--radius-card);
+    padding: clamp(1.1rem, 4vw, 1.5rem);
+    box-shadow: 0 1.25rem 3.5rem
+      color-mix(in srgb, var(--color-ink) 30%, transparent);
+  }
+
+  /* A white sheet on a cream page: the same shape, held by a hairline
+     instead of a shadow, because a shadow on cream reads as dirt. */
+  .card {
+    border-radius: var(--radius-card);
+    padding-inline: clamp(1rem, 4vw, 1.25rem);
+    background: var(--color-white);
+    border: 1px solid color-mix(in srgb, var(--tone-fg) 12%, transparent);
+  }
+
+  /* ---- the verdict ------------------------------------------------------ */
+  /* The whole screen in one colour until it is tapped. White type on all three,
+     because it has to be read at arm's length in sun and the wash is loud enough
+     to carry it. */
+  .verdict {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    padding: var(--spacing-gutter);
+    background: var(--color-signal-go);
+    color: var(--color-white);
+    animation: arrive-verdict 220ms var(--ease-soft) both;
+    cursor: pointer;
+  }
+
+  .verdict[data-signal="wait"] {
+    background: var(--color-signal-wait);
+  }
+
+  .verdict[data-signal="stop"] {
+    background: var(--color-signal-stop);
+  }
+
+  @keyframes arrive-verdict {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .verdict__body {
+    display: grid;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: var(--measure);
+    text-align: center;
+  }
+
+  .verdict__kind {
+    opacity: 0.85;
+  }
+
+  .verdict__name {
+    margin: 0;
+    font-size: var(--text-section);
+    line-height: var(--text-section--line-height);
+    letter-spacing: var(--text-section--letter-spacing);
+    text-transform: uppercase;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  .verdict__detail {
+    margin: 0;
+    font-size: var(--text-lead);
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.9;
+  }
+
+  .verdict__hint {
+    margin-top: 1.5rem;
+    opacity: 0.7;
+  }
+
+  /* The fields for what is missing. Not a PassField: this sits on a red wash,
+     and the box has to read against it. */
+  .verdict__form {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+    text-align: left;
+    cursor: default;
+  }
+
+  .verdict__field {
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .verdict__box {
+    display: flex;
+    align-items: center;
+    background: var(--color-white);
+    border-radius: var(--radius-card);
+    color: var(--color-ink);
+  }
+
+  .verdict__prefix {
+    padding-left: 0.9rem;
+    font-size: max(1rem, var(--text-lead));
+    opacity: 0.5;
+  }
+
+  .verdict__box input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.9rem;
+    background: none;
+    border: 0;
+    color: inherit;
+    font-family: inherit;
+    /* Never under 1rem: Safari zooms the page to meet a smaller focused field. */
+    font-size: max(1rem, var(--text-lead));
+  }
+
+  .verdict__box:has(input:focus-visible) {
+    outline: 2px solid var(--color-white);
+    outline-offset: 3px;
+  }
+
+  .verdict__box input:focus-visible {
+    outline: none;
+  }
+
+  .verdict__error {
+    margin: 0;
+    font-size: var(--text-eyebrow);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .verdict__form .cta {
+    margin-top: 0.25rem;
+  }
+
+  .verdict__form .verdict__hint {
+    margin-top: 0;
+    text-align: center;
+  }
+
+  /* ---- controls --------------------------------------------------------- */
+  .cta {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-control-block) var(--spacing-control-inline);
+    border: 0;
+    background: var(--color-cream);
+    color: var(--color-olive-dark);
+    font-family: inherit;
+    font-size: var(--text-eyebrow);
+    font-weight: 800;
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      transform var(--duration-base) var(--ease-soft),
+      background-color var(--duration-base) ease;
+  }
+
+  .cta:hover {
+    transform: translateY(-2px);
+  }
+
+  .cta:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  .cta--dark {
+    background: var(--color-olive-dark);
+    color: var(--color-cream);
+  }
+
+  .cta--dark:hover {
+    background: var(--color-olive);
+  }
+
+  /* The secondary control: a hairline pill in the tone's own colour. */
+  .tool {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    padding: 0.85rem 1.25rem;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--tone-fg) 40%, transparent);
+    color: var(--tone-fg);
+    font-family: inherit;
+    font-size: var(--text-eyebrow);
+    font-weight: 800;
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-base) ease,
+      border-color var(--duration-base) ease;
+  }
+
+  .tool:hover {
+    border-color: var(--tone-fg);
+  }
+
+  .tool--solid {
+    background: var(--tone-fg);
+    border-color: var(--tone-fg);
+    color: var(--tone-bg);
+  }
+
+  .tool--quiet {
+    border-color: transparent;
+    opacity: 0.7;
+  }
+
+  .tool--quiet:hover {
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--tone-fg) 40%, transparent);
+  }
+
+  .tool--dark {
+    color: var(--color-olive-dark);
+    border-color: color-mix(in srgb, var(--color-olive-dark) 40%, transparent);
+  }
+
+  /* Two or three choices, one of them on. */
+  .mode {
+    display: flex;
+    padding: 0.25rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--tone-fg) 8%, transparent);
+  }
+
+  .mode__option {
+    flex: 1;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--tone-fg);
+    font-family: inherit;
+    font-size: var(--text-eyebrow);
+    font-weight: 800;
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    opacity: 0.7;
+    transition:
+      background-color var(--duration-base) ease,
+      color var(--duration-base) ease,
+      opacity var(--duration-base) ease;
+  }
+
+  .mode__option[aria-pressed="true"] {
+    background: var(--tone-fg);
+    color: var(--tone-bg);
+    opacity: 1;
+  }
+
+  /* The small in-place action beside a gap. Text-sized, so it sits in the line. */
+  .add {
+    padding: 0.15rem 0.55rem;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: var(--text-eyebrow);
+    font-weight: 800;
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-inline-start: -0.75rem;
+    padding-inline: 0.75rem;
+    border: 0;
+    background: none;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+  }
+
+  .back:hover {
+    opacity: 1;
+  }
+
+  /* ---- install it first ------------------------------------------------- */
+  .install {
+    align-self: center;
+    padding-block: var(--spacing-gutter-block);
+  }
+
+  /* One platform's steps when the phone is known; both, with their headings,
+     when it is not. */
+  .install[data-platform="ios"] [data-for]:not([data-for="ios"]),
+  .install[data-platform="android"] [data-for]:not([data-for="android"]),
+  .install:not([data-platform="other"]) .steps__head {
+    display: none;
+  }
+
+  .steps__head {
+    opacity: 0.6;
+  }
+
+  .steps__head + .steps {
+    margin-top: 0.75rem;
+  }
+
+  .steps + .steps__head {
+    margin-top: 1.5rem;
+  }
+
+  .steps {
+    display: grid;
+    gap: 0.9rem;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    font-family: var(--font-serif);
+    font-size: var(--text-lead);
+    line-height: 1.35;
+  }
+
+  /* The number in the display face, the way the calendar sets its dates. Set
+     off to the left of the text rather than as a grid column, so the words and
+     their emphasis stay one line of prose. */
+  .steps li {
+    position: relative;
+    padding-left: 2.6rem;
+    counter-increment: step;
+  }
+
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    top: -0.1em;
+    left: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-title);
+    line-height: 1;
+    opacity: 0.5;
+  }
+
+  .steps strong {
+    font-weight: 600;
+  }
+
+  /* ---- which hike ------------------------------------------------------- */
+  .list {
+    list-style: none;
+    padding-block: 0.25rem;
+    display: grid;
+  }
+
+  .list > li + li {
+    border-top: 1px solid color-mix(in srgb, var(--tone-fg) 12%, transparent);
+  }
+
+  .pick {
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.9rem;
+    width: 100%;
+    min-height: 4.25rem;
+    padding: 0.9rem 0.25rem;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .pick--earlier {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .pick__date {
+    display: grid;
+    justify-items: center;
+    line-height: 1;
+  }
+
+  .pick__day {
+    font-size: var(--text-title);
+    line-height: 0.9;
+  }
+
+  .pick__month {
+    margin-top: 0.2rem;
+  }
+
+  .pick__body {
+    display: grid;
+    min-width: 0;
+  }
+
+  .pick__title {
+    font-size: var(--text-lead);
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .pick__place {
+    margin-top: 0.15rem;
+    font-size: var(--text-eyebrow);
+    line-height: 1.4;
+    opacity: 0.65;
+  }
+
+  .pick__count {
+    color: var(--tone-accent);
+    white-space: nowrap;
+  }
+
+  .pick--other .pick__day {
+    opacity: 0.5;
+  }
+
+  /* ---- the scanner ------------------------------------------------------ */
+  /* Fills the screen and does not scroll as a whole: the head, the switch,
+     the camera and the tools hold still and the feed scrolls under them. */
+  .app[data-step="scan"] {
+    min-height: auto;
+    height: 100svh;
+    padding-block: 0;
+    align-content: stretch;
+  }
+
+  .scanner {
+    display: grid;
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    gap: 0.85rem;
+    height: 100%;
+    padding-top: calc(var(--spacing-gutter-block) + env(safe-area-inset-top));
+  }
+
+  .scanner__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .scanner__hike {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .scanner__title {
+    font-size: var(--text-title);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: var(--text-title--letter-spacing);
+  }
+
+  .scanner__change {
+    opacity: 0.55;
+  }
+
+  .scanner__count {
+    display: grid;
+    justify-items: end;
+    flex: none;
+    line-height: 1;
+  }
+
+  /* Readable from arm's length: the one number this screen is for. */
+  .scanner__number {
+    font-size: var(--text-section);
+    line-height: 0.9;
+    letter-spacing: var(--text-section--letter-spacing);
+  }
+
+  .scanner__count .eyebrow {
+    opacity: 0.6;
+  }
+
+  .viewfinder {
+    position: relative;
+    aspect-ratio: 3 / 2;
+    width: 100%;
+    max-height: 38svh;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background: var(--color-ink);
+    color: var(--color-cream);
+  }
+
+  .viewfinder__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Four corners, so the leader knows where to hold the code without the
+     frame covering what the camera sees. */
+  .viewfinder__frame {
+    position: absolute;
+    inset: 14% 22%;
+    border: 2px solid color-mix(in srgb, var(--color-cream) 75%, transparent);
+    border-radius: var(--radius-card);
+    mask:
+      linear-gradient(var(--color-black) 0 0) top left / 24% 30% no-repeat,
+      linear-gradient(var(--color-black) 0 0) top right / 24% 30% no-repeat,
+      linear-gradient(var(--color-black) 0 0) bottom left / 24% 30% no-repeat,
+      linear-gradient(var(--color-black) 0 0) bottom right / 24% 30% no-repeat;
+    pointer-events: none;
+  }
+
+  .torch {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--color-cream) 60%, transparent);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-black) 35%, transparent);
+    color: var(--color-cream);
+    cursor: pointer;
+  }
+
+  .torch svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+  }
+
+  /* Lit: filled, the way a torch that is on looks different from one that is off. */
+  .torch[aria-pressed="true"] {
+    background: var(--color-cream);
+    color: var(--color-ink);
+  }
+
+  .torch[aria-pressed="true"] svg {
+    fill: currentColor;
+  }
+
+  .viewfinder__pane {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    padding: clamp(1.25rem, 6vw, 2.5rem);
+    text-align: center;
+  }
+
+  .viewfinder__pane .cta {
+    width: auto;
+  }
+
+  .viewfinder__error {
+    max-width: 30ch;
+    font-size: var(--text-eyebrow);
+    line-height: 1.5;
+    color: var(--color-sand);
+  }
+
+  .tools {
+    display: flex;
+    gap: 0.6rem;
+  }
+
+  .tools .tool {
+    flex: 1;
+    padding-inline: 0.5rem;
+  }
+
+  /* ---- the feed --------------------------------------------------------- */
+  .feed {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0 0 calc(var(--spacing-gutter-block) + env(safe-area-inset-bottom));
+    list-style: none;
+    overflow-y: auto;
+    /* Room for the top card's ring. */
+    padding-top: 0.15rem;
+    scrollbar-width: none;
+  }
+
+  .feed__empty {
+    text-align: center;
+  }
+
+  .feed .row {
+    border-radius: var(--radius-card);
+    background: var(--color-white);
+    border: 1px solid color-mix(in srgb, var(--tone-fg) 12%, transparent);
+    animation: feed-card-in 300ms var(--ease-soft) both;
+    transition: opacity 260ms var(--ease-soft);
+  }
+
+  /* The stack fades as it gets older. */
+  .feed .row:nth-child(2) {
+    opacity: 0.68;
+  }
+
+  .feed .row:nth-child(3) {
+    opacity: 0.38;
+  }
+
+  .feed .row--enter {
+    animation-name: feed-card-in;
+  }
+
+  .feed .row--leave {
+    animation: feed-card-out 280ms var(--ease-soft) forwards;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  @keyframes feed-card-in {
+    from {
+      opacity: 0;
+      translate: 0 -0.75rem;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes feed-card-out {
+    from {
+      max-height: 12rem;
+      opacity: 0.38;
+      translate: 0 0;
+    }
+    to {
+      max-height: 0;
+      opacity: 0;
+      padding-block: 0;
+      translate: 0 0.75rem;
+    }
+  }
+
+  /* A new card slides in from above and the oldest card fades out below it. */
+  .feed .row--enter {
+    overflow: hidden;
+  }
+
+  /* ---- rows ------------------------------------------------------------- */
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .row__body {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .row__name {
+    margin: 0;
+    font-size: var(--text-lead);
+    font-weight: 500;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .row__detail {
+    margin: 0;
+    font-size: var(--text-eyebrow);
+    line-height: 1.6;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .row__side {
+    display: grid;
+    justify-items: end;
+    gap: 0.15rem;
+  }
+
+  .row__time {
+    margin: 0;
+    font-size: var(--text-eyebrow);
+    line-height: 1.4;
+    text-align: right;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .row__checkout {
+    display: grid;
+    place-items: center;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-olive-dark);
+    font-size: var(--text-eyebrow);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .row__checkout:hover {
+    background: color-mix(in srgb, var(--color-olive-dark) 8%, transparent);
+  }
+
+  .row__call {
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-signal-go);
+    border-radius: var(--radius-pill);
+    color: var(--color-signal-go);
+    font-size: var(--text-eyebrow);
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .row__call:hover {
+    background: color-mix(in srgb, var(--color-signal-go) 8%, transparent);
+  }
+
+  /* What is missing is said in the alert colour and in italic, so it does not
+     rest on colour alone. Same as the pass. */
+  .gap {
+    color: var(--color-alert);
+    font-style: italic;
+  }
+
+  .list .row--out .row__name {
+    opacity: 0.7;
+  }
+
+  /* ---- the roll --------------------------------------------------------- */
+  .roll {
+    padding-bottom: calc(
+      var(--spacing-gutter-block) + env(safe-area-inset-bottom)
+    );
+  }
+
+  .list .row {
+    padding: 1rem 0.25rem;
+  }
+
+  .roll .list .row {
+    cursor: pointer;
+  }
+
+  .roll .list .row__checkout {
+    cursor: pointer;
+  }
+
+  .list .row__side {
+    gap: 0.35rem;
+  }
+
+  .actions {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  /* ---- toast ------------------------------------------------------------ */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--spacing-gutter-block) + env(safe-area-inset-bottom));
+    left: 50%;
+    translate: -50% 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: calc(100vw - 2 * var(--spacing-gutter));
+    padding: 0.85rem 1.25rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-ink);
+    color: var(--color-cream);
+    font-size: var(--text-eyebrow);
+    font-weight: 600;
+    line-height: 1.4;
+    box-shadow: 0 0.9rem 2.2rem
+      color-mix(in srgb, var(--color-black) 40%, transparent);
+  }
+
+  .toast button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-sand);
+    font: inherit;
+    font-weight: 800;
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  /* ---- dialogs ---------------------------------------------------------- */
+  /* A sheet from the bottom on a phone, a card in the middle anywhere wider. */
+  .sheet {
+    width: 100%;
+    max-width: none;
+    margin: auto 0 0;
+    padding: clamp(1.35rem, 5vw, 2rem);
+    padding-bottom: calc(
+      clamp(1.35rem, 5vw, 2rem) + env(safe-area-inset-bottom)
+    );
+    border: 0;
+    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+    /* The tone sets colour; the dialog element's own defaults would override. */
+    background: var(--tone-bg);
+    color: var(--tone-fg);
+  }
+
+  .sheet::backdrop {
+    background: color-mix(in srgb, var(--color-ink) 65%, transparent);
+  }
+
+  @media (width >= 40rem) {
+    .sheet {
+      max-width: var(--measure);
+      margin: auto;
+      border-radius: var(--radius-card);
+    }
+  }
+
+  .fields {
+    display: grid;
+    gap: clamp(1rem, 3svh, 1.35rem);
+  }
+
+  .sheet__actions {
+    display: grid;
+    gap: 0.75rem;
+  }
+</style>

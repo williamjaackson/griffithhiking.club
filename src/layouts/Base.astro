@@ -18,9 +18,18 @@ interface Props {
    *  still snapped the status bar back to a light colour, because body underneath
    *  it was cream. Whatever a page paints itself, it has to say so here too. */
   surface?: "cream" | "olive";
+  /** Which app this page belongs to. The site is one installable thing; the
+   *  scanner at /scan/ is another, with its own manifest scoped to its own
+   *  path, so a leader can install it beside the site rather than instead. */
+  manifest?: string;
 }
 
-const { title, description, surface = "cream" } = Astro.props;
+const {
+  title,
+  description,
+  surface = "cream",
+  manifest = "/site.webmanifest",
+} = Astro.props;
 
 const themeColor = tokens.match(/--color-olive:\s*(#[0-9a-f]{6})/i)?.[1];
 ---
@@ -38,7 +47,7 @@ const themeColor = tokens.match(/--color-olive:\s*(#[0-9a-f]{6})/i)?.[1];
     <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="/favicon-192.png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="manifest" href={manifest} />
     <meta name="theme-color" content={themeColor} />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
@@ -53,6 +62,11 @@ const themeColor = tokens.match(/--color-olive:\s*(#[0-9a-f]{6})/i)?.[1];
       type="font/woff2"
       crossorigin
     />
+    {
+      /* For what only one page needs in its head: the scanner's robots and
+         home-screen tags. Most pages leave it empty. */
+    }
+    <slot name="head" />
   </head>
   <body data-surface={surface}>
     <a class="skip-link" href="#main">Skip to content</a>
