@@ -362,7 +362,7 @@ const upcoming = getUpcoming(
           <button class="row__checkout" type="button" data-checkout>
             Check out
           </button>
-          <a class="row__call" data-call href>Call</a>
+          <a class="row__call" data-call href="#">Call</a>
           <p class="row__time" data-time></p>
         </div>
       </li>
@@ -1434,7 +1434,7 @@ const upcoming = getUpcoming(
     const departing = [...feed.children].filter(
       (el) => !nextIds.has(el.getAttribute("data-id") ?? ""),
     );
-    const elements = rows.map(rowElement);
+    const elements = rows.map((row) => rowElement(row));
 
     feed.querySelectorAll(".row--leave").forEach((el) => el.remove());
     feed.replaceChildren(...elements);
