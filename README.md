@@ -4,17 +4,18 @@ The website for Griffith University's Hiking Club. Upcoming hikes, weekends from
 
 [Visit griffithhiking.club](https://griffithhiking.club)
 
-[![Griffith Hiking Club desktop homepage](docs/media/homepage.png)](docs/media/homepage.png)
+<table>
+  <tr>
+    <td width="75%"><a href="docs/media/homepage.png"><img src="docs/media/homepage.png" alt="Griffith Hiking Club desktop homepage" /></a></td>
+    <td width="25%"><a href="docs/media/instagram-mobile.png"><img src="docs/media/instagram-mobile.png" alt="Mobile homepage at the Instagram section" /></a></td>
+  </tr>
+</table>
 
-## On mobile
+## Trail Pass, without reception
 
-Photos from the club's weekends and a Trail Pass you can keep on your phone.
+Many of our hikes have no phone signal. Hikers make their Trail Pass before leaving and save a screenshot. The QR code carries their details, so leaders can check people in and out without an internet connection.
 
-<p>
-  <a href="docs/media/instagram-mobile.png"><img src="docs/media/instagram-mobile.png" width="240" alt="Mobile homepage at the Instagram section" /></a>
-</p>
-
-### Trail Pass
+Install and open the [Attendance scanner](https://griffithhiking.club/scan/) while online before the hike. It then works offline, keeps the roll on the leader's phone, and shows who still needs to check out.
 
 Enter your details, continue, and keep the QR pass for your next hike. Example details shown below.
 
@@ -22,6 +23,14 @@ Enter your details, continue, and keep the QR pass for your next hike. Example d
   <a href="docs/media/trail-pass-details.png"><img src="docs/media/trail-pass-details.png" width="240" alt="Trail Pass form with William Jackson's example details" /></a>
   <a href="docs/media/trail-pass-continue.png"><img src="docs/media/trail-pass-continue.png" width="240" alt="Example student number and phone number before continuing" /></a>
   <a href="docs/media/trail-pass-ready.png"><img src="docs/media/trail-pass-ready.png" width="240" alt="Completed Trail Pass with its QR code" /></a>
+</p>
+
+### At the trailhead
+
+Pick the hike → scan passes to check in → scan again to check out. Add anyone without a pass by hand. The attendance roll below is shown with the browser offline.
+
+<p>
+  <a href="docs/media/scanner-roll.png"><img src="docs/media/scanner-roll.png" width="280" alt="Offline attendance roll with William Jackson checked in and the Still out filter" /></a>
 </p>
 
 ## Run locally
