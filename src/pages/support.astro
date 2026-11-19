@@ -1,0 +1,36 @@
+---
+import Base from "../layouts/Base.astro";
+import { links } from "../lib/links";
+---
+
+<Base
+  title="App support · Griffith Hiking Club"
+  description="Contact Griffith Hiking Club about the club app, a safety concern or an account suspension."
+>
+  <article class="mx-auto max-w-2xl px-gutter py-section">
+    <a href="/" class="underline">Griffith Hiking Club</a>
+    <h1 class="font-serif my-6 text-5xl">App support</h1>
+    <p>
+      For help with your account, a safety concern or an appeal, message the
+      club committee on Instagram.
+    </p>
+    <p class="my-6">
+      <a class="underline" href={links.instagram}
+        >Contact {links.instagramHandle}</a>
+    </p>
+    <h2 class="font-serif my-4 text-3xl">Report a message or photo</h2>
+    <p>
+      Hold a chat message or open a photo’s menu and choose Report. Your report
+      goes to club admins. You can also block direct messages from a member’s
+      profile.
+    </p>
+    <h2 class="font-serif my-4 text-3xl">Community rules</h2>
+    <p>
+      Only share photos you have permission to post. Threats, harassment, hate,
+      sexual or graphic content, and sharing private information can lead to
+      content removal or account suspension. Club admins review new photos
+      before other members can see them, including photos sent in direct
+      messages.
+    </p>
+  </article>
+</Base>
